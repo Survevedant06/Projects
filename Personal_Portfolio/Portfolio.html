@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vedant Surve | AI/ML Engineer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Global Styles */
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #6b98d1;
+            --accent: #ff6b6b;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --text: #2d3748;
+            --background: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        section {
+            padding: 80px 0;
+        }
+        
+        h1, h2, h3 {
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px var(--shadow);
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            text-align: center;
+            padding: 120px 0 100px;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+        
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header-title {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            animation: fadeInDown 1s ease;
+        }
+        
+        .header-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease;
+        }
+        
+        /* About Section */
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            background-color: var(--background);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+        
+        /* Skills Section */
+        .skills-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+        
+        .skill-category {
+            background-color: var(--background);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px var(--shadow);
+            transition: transform 0.3s ease;
+        }
+        
+        .skill-category:hover {
+            transform: translateY(-10px);
+        }
+        
+        .skill-category h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .skill-list {
+            list-style-type: none;
+        }
+        
+        .skill-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .skill-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .skill-list i {
+            color: var(--primary);
+            margin-right: 10px;
+        }
+        
+        /* Projects Section */
+        .projects-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .project-card {
+            background-color: var(--background);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px var(--shadow);
+            transition: transform 0.3s ease;
+        }
+        
+        .project-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .project-content {
+            padding: 25px;
+        }
+        
+        .project-title {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .project-level {
+            display: inline-block;
+            padding: 5px 12px;
+            background-color: var(--secondary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+        }
+        
+        /* Achievements Section */
+        .achievements-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            background-color: var(--background);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+        
+        .trophy {
+            font-size: 3rem;
+            color: gold;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        /* Contact Section */
+        .contact-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            background-color: var(--background);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+        
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .contact-link:hover {
+            background-color: var(--secondary);
+            transform: translateY(-5px);
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 2.5rem;
+            }
+            
+            .header-subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .contact-links {
+                flex-wrap: wrap;
+            }
+            
+            section {
+                padding: 60px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header id="home">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="header-title">Vedant Surve</h1>
+                <p class="header-subtitle">Computer Engineering Student | Aspiring AI/ML Engineer | Open to Work</p>
+                <a href="#contact" class="btn">Get in Touch</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- About Me Section -->
+    <section id="about">
+        <div class="container">
+            <h2 class="section-title">About Me</h2>
+            <div class="about-content fade-in">
+                <p>I am a Computer Engineering student with experience in Python, C, C++, Java, JavaScript, React, and APIs. Passionate about AI/ML, software development, and creative design. I also design posters on Canva and edit videos on mobile.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills">
+        <div class="container">
+            <h2 class="section-title">Skills</h2>
+            <div class="skills-container">
+                <div class="skill-category fade-in">
+                    <h3>Programming</h3>
+                    <ul class="skill-list">
+                        <li><i class="fas fa-code"></i> Python</li>
+                        <li><i class="fas fa-code"></i> C</li>
+                        <li><i class="fas fa-code"></i> C++</li>
+                        <li><i class="fas fa-code"></i> Java</li>
+                        <li><i class="fas fa-code"></i> JavaScript</li>
+                    </ul>
+                </div>
+                
+                <div class="skill-category fade-in">
+                    <h3>Web Development</h3>
+                    <ul class="skill-list">
+                        <li><i class="fas fa-globe"></i> HTML</li>
+                        <li><i class="fas fa-globe"></i> CSS</li>
+                        <li><i class="fas fa-globe"></i> React</li>
+                        <li><i class="fas fa-globe"></i> APIs</li>
+                    </ul>
+                </div>
+                
+                <div class="skill-category fade-in">
+                    <h3>AI/ML</h3>
+                    <ul class="skill-list">
+                        <li><i class="fas fa-brain"></i> Beginner projects</li>
+                        <li><i class="fas fa-brain"></i> Exa AI</li>
+                        <li><i class="fas fa-brain"></i> TensorFlow basics</li>
+                    </ul>
+                </div>
+                
+                <div class="skill-category fade-in">
+                    <h3>Creative</h3>
+                    <ul class="skill-list">
+                        <li><i class="fas fa-paint-brush"></i> Canva poster design</li>
+                        <li><i class="fas fa-video"></i> Mobile video editing</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects">
+        <div class="container">
+            <h2 class="section-title">Projects</h2>
+            <div class="projects-container">
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Beginner</span>
+                        <h3 class="project-title">Tic-Tac-Toe</h3>
+                        <p>A classic Tic-Tac-Toe game implemented with a clean UI and game logic.</p>
+                    </div>
+                </div>
+                
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Beginner</span>
+                        <h3 class="project-title">Chess Game</h3>
+                        <p>Chess game with complete rules implementation and two-player functionality.</p>
+                    </div>
+                </div>
+                
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Beginner</span>
+                        <h3 class="project-title">Flappy Bird Clone</h3>
+                        <p>A recreation of the popular Flappy Bird game with similar mechanics and design.</p>
+                    </div>
+                </div>
+                
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Beginner/Intermediate</span>
+                        <h3 class="project-title">Ping Pong Clone</h3>
+                        <p>Classic Pong game with smooth paddle movement and scoring system.</p>
+                    </div>
+                </div>
+                
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Intermediate</span>
+                        <h3 class="project-title">Search Engine (Exa AI)</h3>
+                        <p>A search engine implementation using Exa AI for intelligent query processing.</p>
+                    </div>
+                </div>
+                
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Intermediate</span>
+                        <h3 class="project-title">Weather App</h3>
+                        <p>Real-time weather application with location detection and forecast data.</p>
+                    </div>
+                </div>
+                
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Intermediate</span>
+                        <h3 class="project-title">Cafe Finder</h3>
+                        <p>Application to find nearby cafes with filters and user reviews.</p>
+                    </div>
+                </div>
+                
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Advanced</span>
+                        <h3 class="project-title">Jarvis AI Assistant</h3>
+                        <p>An AI assistant inspired by Iron Man's Jarvis with voice command capabilities.</p>
+                    </div>
+                </div>
+                
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Websites</span>
+                        <h3 class="project-title">Recipe Book Website</h3>
+                        <p>A comprehensive recipe website with search, categories, and user contributions.</p>
+                        
+                    </div>
+                </div>
+                <div class="project-card fade-in">
+                    <div class="project-content">
+                        <span class="project-level">Websites</span>
+                        <h3 class="project-title">Personal Portfolio</h3>
+                        <p>A Page that describes about myself, skills i have developed and projects i have build.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Achievements Section -->
+    <section id="achievements">
+        <div class="container">
+            <h2 class="section-title">Achievements</h2>
+            <div class="achievements-content fade-in">
+                <div class="trophy"><i class="fas fa-trophy"></i></div>
+                <p>🏆 Won a coding competition with my Jarvis AI Assistant project.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <div class="container">
+            <h2 class="section-title">Contact</h2>
+            <div class="contact-content fade-in">
+                <p>📩 Let's connect! I am open to internships, collaborations, and opportunities in AI/ML and software development.</p>
+                <p>Email: <a href="mailto:vedant.surve@example.com">survevedant2006@gmail.com</a></p>
+                <div class="contact-links">
+                    <a href="https://www.linkedin.com/in/vedant-surve-79811634b?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3B6JzyX6ATSZmbr%2BcHFbzUqQ%3D%3D" target="_blank" class="contact-link" title="LinkedIn">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="https://github.com/Survevedant06" target="_blank" class="contact-link" title="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://x.com/Survevedant06" target="_blank" class="contact-link" title="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="https://www.instagram.com/vedant_surve_8588/" target="_blank" class="contact-link" title="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>© 2025 Vedant Surve </p>
+        </div>
+    </footer>
+
+    <script>
+        // Function to handle fade-in animations
+        function handleScroll() {
+            const elements = document.querySelectorAll('.fade-in');
+            
+            elements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementBottom = element.getBoundingClientRect().bottom;
+                const isVisible = (elementTop < window.innerHeight - 100) && (elementBottom > 0);
+                
+                if (isVisible) {
+                    element.classList.add('visible');
+                }
+            });
+        }
+        
+        // Initial check on page load
+        window.addEventListener('load', handleScroll);
+        
+        // Check on scroll
+        window.addEventListener('scroll', handleScroll);
+        
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 20,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

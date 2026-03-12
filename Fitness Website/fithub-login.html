@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FitHub — Train Harder. Live Better.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black:       #0a0a0a;
+      --surface:     #111111;
+      --card:        #181818;
+      --card-hover:  #1e1e1e;
+      --border:      #2a2a2a;
+      --accent:      orangered;
+      --accent-rgb:  255, 69, 0;
+      --accent-dim:  rgba(255,69,0,0.10);
+      --accent-glow: rgba(255,69,0,0.45);
+      --text:        #f0f0f0;
+      --muted:       #666;
+      --muted2:      #444;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── BACKGROUNDS ── */
+    .bg-canvas {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 10%, rgba(255,69,0,0.07) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 40% at 15% 85%, rgba(255,69,0,0.04) 0%, transparent 60%),
+        var(--black);
+    }
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 30%, transparent 100%);
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(1.5rem, 5vw, 3.5rem);
+      height: 64px;
+      background: rgba(10,10,10,0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      transition: border-color 0.3s;
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.75rem;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      text-shadow: 0 0 20px var(--accent-glow);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--text); }
+    .nav-links {
+      display: flex; gap: clamp(1.2rem, 3vw, 2.5rem);
+      list-style: none; align-items: center;
+    }
+    .nav-links a {
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute; bottom: -4px; left: 0; right: 0;
+      height: 1px; background: var(--accent);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.25s ease;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+    .nav-links a.active { color: var(--accent); }
+    .nav-links a.active::after { transform: scaleX(1); }
+    .nav-cta {
+      background: var(--accent);
+      color: #0a0a0a !important;
+      padding: 0.42rem 1.1rem;
+      border-radius: 6px;
+      font-weight: 600 !important;
+      transition: box-shadow 0.2s, transform 0.15s !important;
+    }
+    .nav-cta:hover {
+      box-shadow: 0 4px 18px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+    .nav-cta::after { display: none; }
+
+    /* ── SHARED SECTION STYLES ── */
+    section {
+      position: relative; z-index: 1;
+      padding: clamp(5rem, 10vw, 8rem) clamp(1.25rem, 6vw, 5rem);
+    }
+    .section-label {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(255,69,0,0.25);
+      padding: 0.28rem 0.85rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      line-height: 1.02;
+      letter-spacing: 0.03em;
+      color: var(--text);
+    }
+    .section-title em {
+      font-style: normal;
+      color: var(--accent);
+      text-shadow: 0 0 28px var(--accent-glow);
+    }
+    .section-sub {
+      margin-top: 0.8rem;
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 300;
+      max-width: 520px;
+    }
+
+    /* ─────────────────────────────── */
+    /* ── HERO ── */
+    /* ─────────────────────────────── */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding-top: 120px;
+      padding-bottom: 5rem;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(255,69,0,0.25);
+      padding: 0.35rem 1rem;
+      border-radius: 999px;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3.4rem, 11vw, 8rem);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    .hero-title em {
+      font-style: normal;
+      color: var(--accent);
+      text-shadow: 0 0 60px var(--accent-glow);
+    }
+    .hero-sub {
+      margin-top: 1.4rem;
+      font-size: clamp(0.95rem, 2vw, 1.12rem);
+      color: var(--muted);
+      font-weight: 300;
+      max-width: 480px;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+    .hero-actions {
+      margin-top: 2.4rem;
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+    .btn-hero-primary {
+      background: var(--accent);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: 0.12em;
+      padding: 0.9rem 2.2rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 6px 30px var(--accent-glow);
+      transition: transform 0.15s, box-shadow 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .btn-hero-primary::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent);
+    }
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 40px var(--accent-glow); }
+    .btn-hero-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: 0.12em;
+      padding: 0.88rem 2rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    }
+    .btn-hero-ghost:hover { border-color: var(--accent); background: var(--accent-dim); transform: translateY(-2px); }
+
+    .hero-stats {
+      display: flex; gap: clamp(2rem, 5vw, 4rem);
+      margin-top: 4rem;
+      animation: fadeUp 0.7s 0.4s ease both;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      color: var(--accent);
+      line-height: 1;
+    }
+    .hero-stat-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 0.2rem;
+    }
+
+    /* scroll indicator */
+    .scroll-hint {
+      margin-top: 3rem;
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      opacity: 0.35;
+      animation: fadeUp 0.7s 0.6s ease both;
+    }
+    .scroll-hint span { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+    .scroll-line {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 0.8; transform: scaleY(1.1); }
+    }
+
+    /* ─────────────────────────────── */
+    /* ── FEATURES ── */
+    /* ─────────────────────────────── */
+    #features {
+      background: linear-gradient(180deg, transparent 0%, rgba(255,69,0,0.02) 50%, transparent 100%);
+      border-top: 1px solid var(--border);
+    }
+    .features-inner {
+      max-width: 1100px; margin: 0 auto;
+    }
+    .features-head { margin-bottom: 3.5rem; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s ease, border-color 0.25s, box-shadow 0.25s;
+      cursor: default;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,69,0,0.3);
+      box-shadow: 0 16px 50px rgba(255,69,0,0.1);
+    }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 52px; height: 52px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(255,69,0,0.22);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.4rem;
+      font-size: 1.5rem;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover .feature-icon {
+      background: rgba(255,69,0,0.18);
+      box-shadow: 0 0 20px rgba(255,69,0,0.25);
+    }
+    .feature-card h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.45rem;
+      letter-spacing: 0.06em;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+    }
+    .feature-card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .feature-tags {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+      margin-top: 1.3rem;
+    }
+    .feature-tag {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(255,69,0,0.2);
+      padding: 0.2rem 0.6rem;
+      border-radius: 5px;
+    }
+
+    /* big feature number */
+    .feature-num {
+      position: absolute; top: 1.6rem; right: 1.8rem;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 4rem;
+      color: rgba(255,69,0,0.05);
+      line-height: 1;
+      pointer-events: none;
+      transition: color 0.25s;
+    }
+    .feature-card:hover .feature-num { color: rgba(255,69,0,0.09); }
+
+    /* ─────────────────────────────── */
+    /* ── PLANS ── */
+    /* ─────────────────────────────── */
+    #plans {
+      border-top: 1px solid var(--border);
+    }
+    .plans-inner {
+      max-width: 1100px; margin: 0 auto;
+    }
+    .plans-head { margin-bottom: 3.5rem; }
+
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .plan-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.2rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+    }
+    .plan-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .plan-card.featured {
+      border-color: rgba(255,69,0,0.5);
+      box-shadow: 0 0 0 1px rgba(255,69,0,0.15), 0 24px 64px rgba(255,69,0,0.12);
+    }
+    .plan-card.featured:hover {
+      box-shadow: 0 0 0 1px rgba(255,69,0,0.3), 0 28px 80px rgba(255,69,0,0.2);
+    }
+    .plan-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+    .plan-card.featured::before {
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .popular-badge {
+      position: absolute; top: -1px; right: 1.8rem;
+      background: var(--accent);
+      color: #0a0a0a;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.28rem 0.7rem 0.3rem;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .plan-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .plan-card.featured .plan-name { color: var(--accent); }
+
+    .plan-price {
+      display: flex; align-items: flex-end; gap: 0.15rem;
+      margin-bottom: 0.4rem;
+    }
+    .plan-currency {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: var(--muted);
+      align-self: flex-start;
+      padding-top: 0.5rem;
+    }
+    .plan-amount {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.8rem;
+      line-height: 1;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+    .plan-period {
+      font-size: 0.82rem;
+      color: var(--muted);
+      padding-bottom: 0.4rem;
+    }
+    .plan-desc {
+      font-size: 0.83rem;
+      color: var(--muted);
+      margin-bottom: 1.8rem;
+      line-height: 1.6;
+    }
+
+    .plan-features {
+      list-style: none;
+      margin-bottom: 2rem;
+      display: flex; flex-direction: column; gap: 0.7rem;
+    }
+    .plan-features li {
+      display: flex; align-items: center; gap: 0.65rem;
+      font-size: 0.86rem;
+      color: var(--text);
+    }
+    .plan-features li.dimmed { color: var(--muted2); }
+    .check-icon {
+      width: 18px; height: 18px; flex-shrink: 0;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+    }
+    .check-icon.yes { background: rgba(255,69,0,0.15); color: var(--accent); border: 1px solid rgba(255,69,0,0.3); }
+    .check-icon.no { background: rgba(255,255,255,0.04); color: var(--muted2); border: 1px solid rgba(255,255,255,0.06); }
+
+    .btn-plan {
+      width: 100%;
+      background: transparent;
+      color: var(--accent);
+      border: 1.5px solid rgba(255,69,0,0.4);
+      border-radius: 10px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      padding: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-plan:hover {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .btn-plan.primary {
+      background: var(--accent);
+      color: #0a0a0a;
+      border-color: transparent;
+      box-shadow: 0 4px 24px var(--accent-glow);
+      position: relative; overflow: hidden;
+    }
+    .btn-plan.primary::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    }
+    .btn-plan.primary:hover {
+      box-shadow: 0 8px 36px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    /* ─────────────────────────────── */
+    /* ── LOGIN ── */
+    /* ─────────────────────────────── */
+    #login {
+      border-top: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center;
+      background: linear-gradient(180deg, transparent 0%, rgba(255,69,0,0.025) 100%);
+    }
+    .login-inner {
+      width: 100%; max-width: 460px;
+    }
+    .login-head {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .card {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(1.8rem, 5vw, 2.6rem);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 30px 80px rgba(0,0,0,0.6);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .card-header { margin-bottom: 1.8rem; }
+    .card-header h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.05em;
+    }
+    .card-header p { font-size: 0.84rem; color: var(--muted); margin-top: 0.3rem; }
+
+    /* FORM */
+    .form-group { margin-bottom: 1.1rem; }
+    label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .input-wrap { position: relative; }
+    .input-icon {
+      position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; opacity: 0.35;
+      pointer-events: none;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      padding: 0.82rem 1rem 0.82rem 2.85rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    input::placeholder { color: #333; }
+    input:focus {
+      border-color: var(--accent);
+      background: rgba(255,69,0,0.04);
+      box-shadow: 0 0 0 3px rgba(255,69,0,0.08);
+    }
+
+    .form-options {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.6rem; margin-top: 0.3rem;
+    }
+    .remember {
+      display: flex; align-items: center; gap: 0.45rem;
+      font-size: 0.8rem; color: var(--muted); cursor: pointer;
+      user-select: none;
+    }
+    .remember input[type="checkbox"] {
+      width: 15px; height: 15px; padding: 0;
+      accent-color: var(--accent);
+    }
+    .forgot {
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .forgot:hover { opacity: 1; }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--accent);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: 0.1em;
+      padding: 0.9rem;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px var(--accent-glow);
+      position: relative; overflow: hidden;
+    }
+    .btn-primary::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--accent-glow); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .divider {
+      display: flex; align-items: center; gap: 0.8rem;
+      margin: 1.5rem 0;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1;
+      height: 1px; background: var(--border);
+    }
+    .divider span { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .btn-secondary {
+      width: 100%;
+      background: transparent;
+      color: var(--accent);
+      border: 1.5px solid rgba(255,69,0,0.38);
+      border-radius: 10px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: 0.12em;
+      padding: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-secondary:hover {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(255,69,0,0.12);
+    }
+
+    .social-row { display: flex; gap: 0.7rem; margin-bottom: 1.5rem; }
+    .btn-social {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem; font-weight: 500;
+      padding: 0.65rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .btn-social:hover { background: rgba(255,255,255,0.08); border-color: #444; }
+    .btn-social svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 2.5rem clamp(1.25rem, 5vw, 3rem);
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    footer span { color: var(--accent); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── scroll-reveal ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .hero-title { font-size: clamp(3rem, 14vw, 5rem); }
+      .plans-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      nav { padding: 0 1.25rem; }
+      .nav-links { gap: 0.9rem; }
+      .hero-stats { gap: 1.8rem; }
+    }
+    @media (max-width: 420px) {
+      .hero-actions { flex-direction: column; align-items: stretch; }
+      .btn-hero-primary, .btn-hero-ghost { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-canvas"></div>
+  <div class="bg-grid"></div>
+
+  <!-- ── NAV ── -->
+  <nav>
+    <a href="#hero" class="nav-logo">Fit<span>Hub</span></a>
+    <ul class="nav-links">
+      <li><a href="#features" data-section="features">Features</a></li>
+      <li><a href="#plans"    data-section="plans">Plans</a></li>
+      <li><a href="#login"    data-section="login" class="nav-cta">Login</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section id="hero">
+    <div class="hero-badge">🔥 No excuses. Just results.</div>
+    <h1 class="hero-title">Transform Your<br/><em>Fitness Journey</em></h1>
+    <p class="hero-sub">Join 2M+ athletes already crushing their goals with AI-powered coaching, real-time analytics, and a community that pushes you further.</p>
+    <div class="hero-actions">
+      <a href="#login" class="btn-hero-primary">Start For Free</a>
+      <a href="#features" class="btn-hero-ghost">See Features</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">2M+</div>
+        <div class="hero-stat-label">Athletes</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">500+</div>
+        <div class="hero-stat-label">Workouts</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">98%</div>
+        <div class="hero-stat-label">Satisfaction</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">12K+</div>
+        <div class="hero-stat-label">PRs Set Daily</div>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section id="features">
+    <div class="features-inner">
+      <div class="features-head reveal">
+        <div class="section-label">⚡ What's inside</div>
+        <h2 class="section-title">Built For Athletes<br/>Who <em>Demand More</em></h2>
+        <p class="section-sub">Every tool you need to train smarter, recover faster, and dominate your goals — all in one platform.</p>
+      </div>
+
+      <div class="features-grid">
+
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-num">01</div>
+          <div class="feature-icon">🤖</div>
+          <h3>Personalized AI Coaching</h3>
+          <p>Your own AI coach that learns your body, adapts to your schedule, and builds programs that evolve with every rep you log. No two athletes get the same plan.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">Adaptive Plans</span>
+            <span class="feature-tag">Real-time Feedback</span>
+            <span class="feature-tag">Form Check</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-num">02</div>
+          <div class="feature-icon">🏆</div>
+          <h3>Community Challenges</h3>
+          <p>Compete in weekly challenges, climb global leaderboards, and earn badges alongside millions of athletes. Accountability is the best pre-workout.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">Live Leaderboards</span>
+            <span class="feature-tag">Team Challenges</span>
+            <span class="feature-tag">Badges & XP</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-num">03</div>
+          <div class="feature-icon">📊</div>
+          <h3>Advanced Analytics</h3>
+          <p>Go beyond step counts. Track HRV, power output, load distribution, sleep quality, and recovery scores — then let FitHub tell you exactly when to push and when to rest.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">HRV Tracking</span>
+            <span class="feature-tag">Recovery Score</span>
+            <span class="feature-tag">Volume Analysis</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PLANS ── -->
+  <section id="plans">
+    <div class="plans-inner">
+      <div class="plans-head reveal">
+        <div class="section-label">💰 Pricing</div>
+        <h2 class="section-title">Simple Plans,<br/><em>Massive Gains</em></h2>
+        <p class="section-sub">No hidden fees. No contracts. Cancel anytime. Pick the plan that matches your ambition.</p>
+      </div>
+
+      <div class="plans-grid">
+
+        <!-- FREE -->
+        <div class="plan-card reveal reveal-delay-1">
+          <div class="plan-name">Free</div>
+          <div class="plan-price">
+            <span class="plan-currency">$</span>
+            <span class="plan-amount">0</span>
+            <span class="plan-period">&nbsp;/ mo</span>
+          </div>
+          <p class="plan-desc">Everything you need to get started. Zero excuses, zero cost.</p>
+          <ul class="plan-features">
+            <li><span class="check-icon yes">✓</span> 50+ guided workouts</li>
+            <li><span class="check-icon yes">✓</span> Basic progress tracking</li>
+            <li><span class="check-icon yes">✓</span> Community feed access</li>
+            <li><span class="check-icon yes">✓</span> 1 active challenge</li>
+            <li class="dimmed"><span class="check-icon no">✗</span> AI coaching</li>
+            <li class="dimmed"><span class="check-icon no">✗</span> Advanced analytics</li>
+            <li class="dimmed"><span class="check-icon no">✗</span> Custom programs</li>
+          </ul>
+          <button class="btn-plan">Get Started</button>
+        </div>
+
+        <!-- PRO -->
+        <div class="plan-card featured reveal reveal-delay-2">
+          <div class="popular-badge">Most Popular</div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">
+            <span class="plan-currency">$</span>
+            <span class="plan-amount">14</span>
+            <span class="plan-period">&nbsp;/ mo</span>
+          </div>
+          <p class="plan-desc">Unlock your full potential with AI coaching and deep performance insights.</p>
+          <ul class="plan-features">
+            <li><span class="check-icon yes">✓</span> 500+ workouts & programs</li>
+            <li><span class="check-icon yes">✓</span> Full AI coaching engine</li>
+            <li><span class="check-icon yes">✓</span> Advanced analytics dashboard</li>
+            <li><span class="check-icon yes">✓</span> Unlimited challenges</li>
+            <li><span class="check-icon yes">✓</span> HRV & recovery tracking</li>
+            <li><span class="check-icon yes">✓</span> Nutrition logging</li>
+            <li class="dimmed"><span class="check-icon no">✗</span> 1-on-1 coach sessions</li>
+          </ul>
+          <button class="btn-plan primary">Select Pro</button>
+        </div>
+
+        <!-- ELITE -->
+        <div class="plan-card reveal reveal-delay-3">
+          <div class="plan-name">Elite</div>
+          <div class="plan-price">
+            <span class="plan-currency">$</span>
+            <span class="plan-amount">39</span>
+            <span class="plan-period">&nbsp;/ mo</span>
+          </div>
+          <p class="plan-desc">White-glove service for athletes who refuse to leave anything on the table.</p>
+          <ul class="plan-features">
+            <li><span class="check-icon yes">✓</span> Everything in Pro</li>
+            <li><span class="check-icon yes">✓</span> Monthly 1-on-1 coach sessions</li>
+            <li><span class="check-icon yes">✓</span> Custom periodization plans</li>
+            <li><span class="check-icon yes">✓</span> Priority support (24/7)</span></li>
+            <li><span class="check-icon yes">✓</span> Early access to new features</li>
+            <li><span class="check-icon yes">✓</span> Exclusive elite challenges</li>
+            <li><span class="check-icon yes">✓</span> Team & multi-athlete accounts</li>
+          </ul>
+          <button class="btn-plan">Select Elite</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LOGIN ── -->
+  <section id="login">
+    <div class="login-head reveal">
+      <div class="section-label">🔐 Member Access</div>
+      <h2 class="section-title">Ready To<br/><em>Get Back In?</em></h2>
+    </div>
+
+    <div class="login-inner reveal reveal-delay-1">
+      <div class="card">
+        <div class="card-header">
+          <h2>Welcome Back</h2>
+          <p>Sign in to continue your grind.</p>
+        </div>
+
+        <!-- SOCIAL LOGIN -->
+        <div class="social-row">
+          <button class="btn-social" type="button">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Google
+          </button>
+          <button class="btn-social" type="button">
+            <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.36.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 3.99zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+            Apple
+          </button>
+        </div>
+
+        <div class="divider"><span>or sign in with email</span></div>
+
+        <form onsubmit="return false;">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+            </div>
+          </div>
+
+          <div class="form-options">
+            <label class="remember">
+              <input type="checkbox"/> Remember me
+            </label>
+            <a href="#" class="forgot">Forgot password?</a>
+          </div>
+
+          <button class="btn-primary" type="submit">Login</button>
+
+          <div class="divider"><span>new to FitHub?</span></div>
+
+          <button class="btn-secondary" type="button">Get Started Free</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── */-->
+  <footer>
+    &copy; 2026 <span>FitHub</span>. Built for athletes, by athletes. No excuses.
+  </footer>
+
+  <script>
+    /* ── SMOOTH SCROLL NAV CLICKS ── */
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', e => {
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    /* ── INTERSECTION OBSERVER: active nav link ── */
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a[data-section]');
+
+    const sectionObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          navLinks.forEach(link => {
+            link.classList.toggle('active', link.dataset.section === id);
+          });
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+
+    sections.forEach(s => sectionObserver.observe(s));
+
+    /* ── INTERSECTION OBSERVER: scroll reveal ── */
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+  </script>
+
+</body>
+</html>
