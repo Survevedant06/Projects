@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security & Compliance Monitor</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0a0c10;
+      --surface: #111318;
+      --surface2: #181c24;
+      --border: rgba(255, 255, 255, 0.07);
+      --border-bright: rgba(255, 255, 255, 0.14);
+      --text: #e8ecf0;
+      --muted: #6b7280;
+      --pass: #22d3a5;
+      --pass-bg: rgba(34, 211, 165, 0.1);
+      --warn: #f59e0b;
+      --warn-bg: rgba(245, 158, 11, 0.1);
+      --fail: #f43f5e;
+      --fail-bg: rgba(244, 63, 94, 0.1);
+      --accent: #6366f1;
+      --accent-bg: rgba(99, 102, 241, 0.12);
+      --mono: 'IBM Plex Mono', monospace;
+      --display: 'Syne', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--display);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .logo {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 0 8px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--pass);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.6;
+        transform: scale(0.85);
+      }
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .nav-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .nav-icon {
+      font-size: 14px;
+      width: 18px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .page-title span {
+      color: var(--accent);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ws-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--pass);
+      background: var(--pass-bg);
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(34, 211, 165, 0.2);
+    }
+
+    .ws-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--pass);
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.85;
+    }
+
+    /* STATS ROW */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .stat-card.healthy::before {
+      background: var(--pass);
+    }
+
+    .stat-card.warning::before {
+      background: var(--warn);
+    }
+
+    .stat-card.critical::before {
+      background: var(--fail);
+    }
+
+    .stat-card.total::before {
+      background: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .stat-card.healthy .stat-value {
+      color: var(--pass);
+    }
+
+    .stat-card.warning .stat-value {
+      color: var(--warn);
+    }
+
+    .stat-card.critical .stat-value {
+      color: var(--fail);
+    }
+
+    .stat-card.total .stat-value {
+      color: var(--accent);
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    /* TARGET CARDS */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .target-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+    }
+
+    .target-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+
+    .target-card:hover {
+      border-color: var(--border-bright);
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-url {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+    }
+
+    .status-pill {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .status-pill.pass {
+      background: var(--pass-bg);
+      color: var(--pass);
+      border: 1px solid rgba(34, 211, 165, 0.25);
+    }
+
+    .status-pill.warn {
+      background: var(--warn-bg);
+      color: var(--warn);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .status-pill.fail {
+      background: var(--fail-bg);
+      color: var(--fail);
+      border: 1px solid rgba(244, 63, 94, 0.25);
+    }
+
+    .status-pill.scanning {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      animation: scan-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes scan-pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.5
+      }
+    }
+
+    .card-checks {
+      padding: 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .check-name {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .check-detail {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .check-status {
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .check-status.pass {
+      color: var(--pass);
+    }
+
+    .check-status.warn {
+      color: var(--warn);
+    }
+
+    .check-status.fail {
+      color: var(--fail);
+    }
+
+    .check-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .pass .check-dot {
+      background: var(--pass);
+    }
+
+    .warn .check-dot {
+      background: var(--warn);
+    }
+
+    .fail .check-dot {
+      background: var(--fail);
+    }
+
+    .card-footer {
+      padding: 10px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .scan-time {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .rescan-btn {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--accent);
+      background: none;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 3px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .rescan-btn:hover {
+      background: var(--accent-bg);
+    }
+
+    /* LIVE FEED */
+    .feed-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .feed-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .feed-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feed-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 12px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .feed-line {
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: var(--surface2);
+    }
+
+    .feed-ts {
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .feed-event {
+      color: var(--text);
+    }
+
+    .feed-status.pass {
+      color: var(--pass);
+    }
+
+    .feed-status.warn {
+      color: var(--warn);
+    }
+
+    .feed-status.fail {
+      color: var(--fail);
+    }
+
+    /* ADD TARGET PANEL */
+    .add-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .add-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .add-input::placeholder {
+      color: var(--muted);
+    }
+
+    .add-input:focus {
+      border-color: var(--accent);
+    }
+
+    .add-input-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      SecMonitor
+    </div>
+    <div class="nav-item active"><span class="nav-icon">◈</span> Dashboard</div>
+    <div class="nav-item"><span class="nav-icon">⊕</span> Targets</div>
+    <div class="nav-item"><span class="nav-icon">↺</span> Scan History</div>
+    <div class="nav-item"><span class="nav-icon">◎</span> Alerts</div>
+    <div class="nav-item"><span class="nav-icon">⚙</span> Settings</div>
+    <div class="sidebar-footer">
+      v1.0.0 · FastAPI + Next.js<br>
+      WebSocket: connected
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title">System <span>Health</span></div>
+      <div class="topbar-right">
+        <div class="ws-badge">
+          <div class="ws-dot"></div> WS Live
+        </div>
+        <button class="btn-primary" onclick="runScan()">▶ Scan All</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card total">
+        <div class="stat-label">Total Targets</div>
+        <div class="stat-value">6</div>
+        <div class="stat-sub">last scan: 2m ago</div>
+      </div>
+      <div class="stat-card healthy">
+        <div class="stat-label">Healthy</div>
+        <div class="stat-value" id="stat-pass">3</div>
+        <div class="stat-sub">all checks pass</div>
+      </div>
+      <div class="stat-card warning">
+        <div class="stat-label">Warning</div>
+        <div class="stat-value" id="stat-warn">2</div>
+        <div class="stat-sub">attention needed</div>
+      </div>
+      <div class="stat-card critical">
+        <div class="stat-label">Critical</div>
+        <div class="stat-value" id="stat-fail">1</div>
+        <div class="stat-sub">immediate action</div>
+      </div>
+    </div>
+
+    <!-- ADD TARGET -->
+    <div class="add-panel">
+      <span class="add-input-label">Add Target</span>
+      <input class="add-input" id="new-target" placeholder="https://example.com or 192.168.1.1" />
+      <button class="btn-primary" onclick="addTarget()">Add + Scan</button>
+    </div>
+
+    <!-- TARGET CARDS -->
+    <div>
+      <div class="section-header" style="margin-bottom:14px">
+        <div class="section-title">Monitored Targets</div>
+      </div>
+      <div class="target-grid" id="target-grid">
+        <!-- Cards injected by JS -->
+      </div>
+    </div>
+
+    <!-- LIVE FEED -->
+    <div class="feed-panel">
+      <div class="feed-header">
+        <div class="feed-title">
+          <div class="ws-dot"></div>
+          Live Event Feed
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">WebSocket /ws/scans</div>
+      </div>
+      <div class="feed-body" id="feed-body">
+        <!-- Events injected by JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const targets = [
+      {
+        url: "https://anthropic.com",
+        status: "pass",
+        checks: [
+          { name: "ssl_certificate", status: "pass", detail: "Valid for 187 days" },
+          { name: "security_headers", status: "pass", detail: "6/6 headers present" },
+          { name: "open_ports", status: "pass", detail: "Only 80, 443 open" },
+        ],
+        scanned: "2m ago",
+      },
+      {
+        url: "https://api.internal.dev",
+        status: "warn",
+        checks: [
+          { name: "ssl_certificate", status: "warn", detail: "Expires in 18 days" },
+          { name: "security_headers", status: "pass", detail: "6/6 headers present" },
+          { name: "open_ports", status: "warn", detail: "Port 22 (SSH) open" },
+        ],
+        scanned: "2m ago",
+      },
+      {
+        url: "https://staging.myapp.io",
+        status: "fail",
+        checks: [
+          { name: "ssl_certificate", status: "pass", detail: "Valid for 45 days" },
+          { name: "security_headers", status: "fail", detail: "Missing HSTS, CSP" },
+          { name: "open_ports", status: "fail", detail: "MySQL :3306 exposed!" },
+        ],
+        scanned: "2m ago",
+      },
+      {
+        url: "https://docs.myapp.io",
+        status: "pass",
+        checks: [
+          { name: "ssl_certificate", status: "pass", detail: "Valid for 92 days" },
+          { name: "security_headers", status: "pass", detail: "6/6 headers present" },
+          { name: "open_ports", status: "pass", detail: "Only 443 open" },
+        ],
+        scanned: "5m ago",
+      },
+      {
+        url: "https://admin.company.com",
+        status: "warn",
+        checks: [
+          { name: "ssl_certificate", status: "pass", detail: "Valid for 230 days" },
+          { name: "security_headers", status: "warn", detail: "Missing Permissions-Policy" },
+          { name: "open_ports", status: "pass", detail: "Only 80, 443 open" },
+        ],
+        scanned: "3m ago",
+      },
+      {
+        url: "https://blog.company.com",
+        status: "pass",
+        checks: [
+          { name: "ssl_certificate", status: "pass", detail: "Valid for 134 days" },
+          { name: "security_headers", status: "pass", detail: "6/6 headers present" },
+          { name: "open_ports", status: "pass", detail: "Only 80, 443 open" },
+        ],
+        scanned: "2m ago",
+      },
+    ];
+
+    const feedEvents = [
+      { ts: "14:32:07", msg: "scan_completed · staging.myapp.io", status: "fail" },
+      { ts: "14:32:04", msg: "scan_started   · staging.myapp.io", status: "" },
+      { ts: "14:31:55", msg: "scan_completed · api.internal.dev", status: "warn" },
+      { ts: "14:31:51", msg: "scan_completed · anthropic.com", status: "pass" },
+      { ts: "14:31:48", msg: "scan_started   · anthropic.com", status: "" },
+      { ts: "14:30:10", msg: "alert_sent     · Discord webhook fired", status: "fail" },
+    ];
+
+    function renderCards() {
+      const grid = document.getElementById("target-grid");
+      grid.innerHTML = targets.map((t, i) => `
+    <div class="target-card">
+      <div class="card-header">
+        <div class="card-url">${t.url}</div>
+        <div class="status-pill ${t.status}">${t.status.toUpperCase()}</div>
+      </div>
+      <div class="card-checks">
+        ${t.checks.map(c => `
+          <div class="check-row">
+            <div class="check-name">${c.name}</div>
+            <div class="check-status ${c.status}">
+              <div class="check-dot"></div>
+              ${c.detail}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+      <div class="card-footer">
+        <div class="scan-time">scanned ${t.scanned}</div>
+        <button class="rescan-btn" onclick="rescanTarget(${i})">↺ Rescan</button>
+      </div>
+    </div>
+  `).join("");
+    }
+
+    function renderFeed() {
+      const body = document.getElementById("feed-body");
+      body.innerHTML = feedEvents.map(e => `
+    <div class="feed-line">
+      <span class="feed-ts">${e.ts}</span>
+      <span class="feed-event feed-status ${e.status}">${e.msg}</span>
+    </div>
+  `).join("");
+    }
+
+    function rescanTarget(idx) {
+      const t = targets[idx];
+      const card = document.querySelectorAll(".target-card")[idx];
+      const pill = card.querySelector(".status-pill");
+      pill.className = "status-pill scanning";
+      pill.textContent = "SCANNING";
+
+      const now = new Date();
+      const ts = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+      feedEvents.unshift({ ts, msg: `scan_started   · ${t.url.replace('https://', '')}`, status: "" });
+      renderFeed();
+
+      setTimeout(() => {
+        feedEvents.unshift({ ts, msg: `scan_completed · ${t.url.replace('https://', '')}`, status: t.status });
+        renderFeed();
+        t.scanned = "just now";
+        renderCards();
+      }, 2200);
+    }
+
+    function runScan() {
+      targets.forEach((_, i) => setTimeout(() => rescanTarget(i), i * 400));
+    }
+
+    function addTarget() {
+      const input = document.getElementById("new-target");
+      const url = input.value.trim();
+      if (!url) return;
+      targets.push({
+        url,
+        status: "scanning",
+        checks: [
+          { name: "ssl_certificate", status: "pass", detail: "Checking..." },
+          { name: "security_headers", status: "pass", detail: "Checking..." },
+          { name: "open_ports", status: "pass", detail: "Checking..." },
+        ],
+        scanned: "just now",
+      });
+      input.value = "";
+      renderCards();
+      const newIdx = targets.length - 1;
+      setTimeout(() => {
+        targets[newIdx].status = "pass";
+        targets[newIdx].checks[0].detail = "Valid for 365 days";
+        targets[newIdx].checks[1].detail = "5/6 headers present";
+        targets[newIdx].checks[2].detail = "Only 443 open";
+        renderCards();
+      }, 2500);
+    }
+
+    renderCards();
+    renderFeed();
+  </script>
+</body>
+
+</html>
