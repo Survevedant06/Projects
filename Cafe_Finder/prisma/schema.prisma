@@ -1,0 +1,200 @@
+// Prisma Schema for Workspace & Cafe Discovery Directory (NomadSpot)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String?         @unique
+  name          String
+  avatarUrl     String?
+  role          String          @default("NOMAD") // NOMAD, CURATOR, ADMIN
+  reputation    Int             @default(10)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  reviews       Review[]
+  curatedLists  CuratedList[]
+  bookmarks     Bookmark[]
+  submittedCafes Cafe[]         @relation("SubmittedCafes")
+  speedTests    SpeedTestLog[]
+}
+
+model Cafe {
+  id                 String     @id @default(cuid())
+  name               String
+  slug               String     @unique
+  tagline            String?
+  description        String?
+  address            String
+  city               String
+  neighborhood       String?
+  country            String?
+  lat                Float
+  lng                Float
+  phone              String?
+  website            String?
+  
+  // External Provider IDs & Caching
+  source             String     @default("VERIFIED") // OSM, GOOGLE, MAPBOX, USER_SUBMITTED, VERIFIED
+  osmId              BigInt?    @unique
+  googlePlaceId      String?    @unique
+  mapboxId           String?    @unique
+  
+  coverImage         String
+  images             String     @default("[]") // JSON array string of image URLs
+  priceLevel         Int        @default(2) // 1 ($) to 4 ($$$$)
+  
+  // Nomad & Workspace Amenities
+  hasWifi            Boolean    @default(true)
+  wifiSpeedMbps      Float      @default(0.0) // Average download Mbps
+  wifiUploadMbps     Float      @default(0.0) // Average upload Mbps
+  wifiReliability    String     @default("STABLE") // ROCK_SOLID, STABLE, SPOTTY
+  wifiPasswordNote   String?
+  
+  powerPlugDensity   String     @default("MODERATE") // NONE, SCARCE, MODERATE, PLENTIFUL, AT_EVERY_SEAT
+  noiseLevel         String     @default("MODERATE") // SILENT, QUIET, MODERATE, LIVELY, NOISY
+  seatingCapacity    String     @default("MEDIUM") // SMALL, MEDIUM, LARGE, SPACIOUS
+  seatingComfort     String     @default("MIXED") // BASIC, MIXED, ERGONOMIC, COZY_COUCHES
+  lighting           String     @default("BRIGHT") // NATURAL_LIGHT, BRIGHT, DIM_COZY, MIXED
+  
+  hasOutdoorSeating  Boolean    @default(false)
+  isPetFriendly      Boolean    @default(true)
+  hasCallBooths      Boolean    @default(false)
+  hasMeetingRooms    Boolean    @default(false)
+  hasParking         Boolean    @default(false)
+  hasAirConditioning Boolean    @default(true)
+  hasRestrooms       Boolean    @default(true)
+  openLate           Boolean    @default(false) // Open past 8 PM
+  
+  // Food & Beverage Specs
+  specialtyCoffee    Boolean    @default(false)
+  roasterName        String?
+  foodOptions        String     @default("LIGHT_BITES") // NONE, PASTRIES, LIGHT_BITES, FULL_MENU
+  veganOptions       Boolean    @default(false)
+  
+  // Verification & Status
+  status             String     @default("VERIFIED") // VERIFIED, COMMUNITY_ADDED, PENDING_REVIEW
+  isVerified         Boolean    @default(false)
+  openingHours       String     @default("{}") // JSON string of opening hours
+  
+  // Metrics & Stats
+  averageRating      Float      @default(0.0)
+  reviewCount        Int        @default(0)
+  
+  submitterId        String?
+  submitter          User?      @relation("SubmittedCafes", fields: [submitterId], references: [id])
+  
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  reviews            Review[]
+  curatedListItems   CuratedListItem[]
+  bookmarks          Bookmark[]
+  speedTests         SpeedTestLog[]
+
+  @@index([lat, lng])
+  @@index([city])
+  @@index([source])
+}
+
+model Review {
+  id                 String     @id @default(cuid())
+  cafeId             String
+  cafe               Cafe       @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  userId             String?
+  user               User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  authorName         String
+  authorAvatar       String?
+  
+  // Multi-Criteria Star Ratings (1 to 5)
+  overallRating      Int
+  wifiRating         Int
+  noiseRating        Int
+  outletRating       Int
+  comfortRating      Int
+  coffeeRating       Int
+  
+  // Additional telemetry from reviewer
+  reportedWifiSpeed  Float?
+  comment            String
+  bestForTags        String?    // JSON array of strings e.g. ["Coding", "Zoom Calls", "Deep Focus"]
+  visitTiming        String?    // "Morning", "Afternoon", "Evening", "Weekend"
+  helpfulCount       Int        @default(0)
+  
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  @@index([cafeId])
+}
+
+model CuratedList {
+  id                 String            @id @default(cuid())
+  title              String
+  slug               String            @unique
+  description        String
+  coverImage         String?
+  isPublic           Boolean           @default(true)
+  tags               String?           // JSON array of tags
+  
+  userId             String?
+  user               User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authorName         String            @default("Curator")
+  
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  
+  items              CuratedListItem[]
+}
+
+model CuratedListItem {
+  id                 String      @id @default(cuid())
+  listId             String
+  list               CuratedList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  cafeId             String
+  cafe               Cafe        @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  
+  curatorNote        String?     // e.g. "Try the single-origin pour over and sit in the mezzanine"
+  order              Int         @default(0)
+  
+  createdAt          DateTime    @default(now())
+
+  @@unique([listId, cafeId])
+}
+
+model Bookmark {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cafeId             String
+  cafe               Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  
+  createdAt          DateTime @default(now())
+
+  @@unique([userId, cafeId])
+}
+
+model SpeedTestLog {
+  id                 String   @id @default(cuid())
+  cafeId             String
+  cafe               Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  userId             String?
+  user               User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  downloadMbps       Float
+  uploadMbps         Float
+  pingMs             Float
+  ipLocation         String?
+  deviceType         String?  // "MacBook Pro", "iPhone", "Windows Laptop", etc.
+  
+  createdAt          DateTime @default(now())
+
+  @@index([cafeId])
+}

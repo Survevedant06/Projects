@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -5,101 +7,342 @@
 }
 
 body {
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Outfit', sans-serif;
+  color: #fff;
+  background-color: #0b0f19;
 }
 
+/* ─── App Shell ──────────────────────────────────────────── */
+
 .app {
-  background-image: url('./assets/cold-bg.jpg');
+  background-image: url('./assets/premium-cold-bg.png');
   background-size: cover;
   background-position: center;
-  transition: 0.4s ease;
+  transition: background-image 0.8s ease, background 0.8s ease;
 }
 
 .app.warm {
-  background-image: url('./assets/warm-bg.jpg');
+  background-image: url('./assets/premium-warm-bg.png');
 }
 
 main {
   min-height: 100vh;
-  /* Dark transparent overlay */
-  background-color: rgba(0, 0, 0, 0.35); 
-  padding: 25px;
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.35) 0%,
+      rgba(5, 8, 20, 0.75) 100%);
+  padding: 50px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
+.container {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ─── Search Box ─────────────────────────────────────────── */
 
 .search-box {
   width: 100%;
-  margin: 0 0 75px;
+  position: relative;
 }
 
 .search-box .search-bar {
   display: block;
   width: 100%;
-  padding: 15px;
-
+  padding: 17px 24px;
   appearance: none;
-  background: none;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
 
-  background-color: rgba(255, 255, 255, 0.5);
-  border-radius: 0px 0px 16px 16px;
-  margin-top: -25px;
-
-  box-shadow: 0px 5px rgba(0, 0, 0, 0.2);
-
-  color: #313131;
-  font-size: 20px;
-
-  transition: 0.4s ease;
+.search-box .search-bar::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 400;
 }
 
 .search-box .search-bar:focus {
-  background-color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.38);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 3px rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Result Card ────────────────────────────────────────── */
+
+.result-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.04) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 28px;
+  padding: 36px 30px 30px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.2) inset;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  position: relative;
+  overflow: hidden;
+  animation: cardEntrance 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Subtle gradient sheen inside the card */
+.result-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background: linear-gradient(135deg,
+      rgba(147, 197, 253, 0.07) 0%,
+      transparent 55%,
+      rgba(196, 181, 253, 0.04) 100%);
+  pointer-events: none;
+  transition: background 0.8s ease;
+}
+
+/* Top accent line — blue for cold, amber for warm */
+.result-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 2px;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(99, 179, 237, 0.85),
+      transparent);
+  border-radius: 0 0 2px 2px;
+  transition: background 0.8s ease;
+}
+
+.app.warm .result-container::before {
+  background: linear-gradient(135deg,
+      rgba(252, 196, 100, 0.08) 0%,
+      transparent 55%,
+      rgba(248, 113, 113, 0.05) 100%);
+}
+
+.app.warm .result-container::after {
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(251, 191, 36, 0.85),
+      transparent);
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ─── Location Block ─────────────────────────────────────── */
+
+.location-box {
+  animation: slideDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
 .location-box .location {
-  color: #FFF;
-  font-size: 32px;
-  font-weight: 500;
+  color: #fff;
+  font-size: 34px;
+  font-weight: 700;
   text-align: center;
-  text-shadow: 3px 3px rgba(50, 50, 70, 0.5);
+  letter-spacing: 0.4px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 
 .location-box .date {
-  color: #FFF;
-  font-size: 20px;
-  font-weight: 300;
-  font-style: italic;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 13px;
+  font-weight: 400;
   text-align: center;
-  text-shadow: 2px 2px rgba(50, 50, 70, 0.5);
+  margin-top: 5px;
+  letter-spacing: 0.5px;
 }
 
+/* ─── Weather Block ──────────────────────────────────────── */
+
 .weather-box {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 6px;
+  animation: slideDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
 }
 
 .weather-box .temp {
-  position: relative;
-  display: inline-block;
-  margin: 30px auto;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-
-  padding: 15px 25px;
-
-  color: #FFF;
-  font-size: 102px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  color: #fff;
+  font-size: 100px;
   font-weight: 900;
+  line-height: 1;
+  letter-spacing: -2px;
+  margin: 16px 0 6px;
+  text-shadow:
+    0 0 80px rgba(99, 179, 237, 0.35),
+    0 4px 24px rgba(0, 0, 0, 0.5);
+  transition: text-shadow 0.8s ease;
+  position: relative;
+}
 
-  text-shadow: 3px 6px rgba(50, 50, 70, 0.5);
-  text-align: center;
-  box-shadow: 3px 6px rgba(0, 0, 0, 0.2);
+.app.warm .weather-box .temp {
+  text-shadow:
+    0 0 80px rgba(251, 191, 36, 0.35),
+    0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Degree symbol — positioned as superscript */
+.weather-box .temp::after {
+  content: '°C';
+  position: absolute;
+  top: 14px;
+  right: -42px;
+  font-size: 26px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0;
 }
 
 .weather-box .weather {
-  color: #FFF;
-  font-size: 48px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* ─── Divider ────────────────────────────────────────────── */
+
+.extra-stats {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  animation: slideDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+/* ─── Stat Cards ─────────────────────────────────────────── */
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px 8px 12px;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  cursor: default;
+}
+
+.stat:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+}
+
+.stat-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.42);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 22px;
   font-weight: 700;
-  text-shadow: 3px 3px rgba(50, 50, 70, 0.5);
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  line-height: 1.1;
+}
+
+/* ─── Welcome Screen ─────────────────────────────────────── */
+
+.welcome-message {
+  text-align: center;
+  color: #fff;
+  margin-top: 56px;
+  animation: fadeIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.welcome-message h2 {
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.welcome-message p {
+  font-size: 15px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.6;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* ─── Shared Animations ──────────────────────────────────── */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

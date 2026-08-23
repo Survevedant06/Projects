@@ -1,7 +1,13 @@
 from exa_py import Exa
+import os
+
+# Read API key from API.txt (same directory as this script)
+_key_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'API.txt')
+with open(_key_path, 'r') as _f:
+    _api_key = _f.read().strip()
 
 # Initialize Exa with your API key
-exa = Exa('d884a3b7-b431-4099-b87b-4c6d60f5c287')
+exa = Exa(_api_key)
 
 # Take input query
 query = input("🔍 Search here: ")

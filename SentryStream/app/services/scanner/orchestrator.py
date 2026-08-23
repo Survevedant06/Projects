@@ -22,6 +22,10 @@ from app.services.scanner.base import CheckResult, CheckStatus
 from app.services.scanner.ssl_checker import SSLChecker
 from app.services.scanner.header_checker import HeaderChecker
 from app.services.scanner.port_checker import PortChecker
+from app.services.scanner.intelligence import IntelligenceChecker
+from app.services.scanner.heuristics import HeuristicEngine
+from app.services.scanner.deep_scan import DeepScanner
+from app.services.scanner.risk_engine import RiskEngine
 
 logger = logging.getLogger(__name__)
 
@@ -33,31 +37,24 @@ class ScanOrchestrator:
     """Runs all registered checkers against a target and emits structured events."""
 
     def __init__(self, publish_fn: PublishFn | None = None):
-        """
-        Args:
-            publish_fn: Async callback that receives the final ScanEvent dict.
-                        Typically wires to a Redis publisher or WS broadcast.
-        """
         self._checkers = [
+            IntelligenceChecker(),
+            HeuristicEngine(),
             SSLChecker(),
             HeaderChecker(),
             PortChecker(),
+            DeepScanner(),
         ]
+        self._risk_engine = RiskEngine()
         self._publish = publish_fn or self._default_publish
 
     async def run_scan(self, target: str, scan_id: str | None = None) -> dict:
-        """
-        Execute all checkers for `target` concurrently.
-
-        Returns:
-            A serializable ScanEvent dict suitable for DB persistence and WS broadcast.
-        """
         scan_id = scan_id or str(uuid.uuid4())
         started_at = datetime.now(tz=timezone.utc)
 
-        logger.info("Starting scan id=%s target=%s", scan_id, target)
+        logger.info("Starting advanced scan id=%s target=%s", scan_id, target)
 
-        # Emit "scan started" event so the UI can show a spinner immediately
+        # Emit "scan started" event
         await self._publish({
             "event": "scan_started",
             "scan_id": scan_id,
@@ -65,11 +62,14 @@ class ScanOrchestrator:
             "timestamp": started_at.isoformat(),
         })
 
-        # Run all checkers concurrently — each is independent and won't block the others
+        # Run all checkers concurrently
         check_results: list[CheckResult] = await asyncio.gather(
             *[checker.run(target) for checker in self._checkers],
             return_exceptions=False,
         )
+
+        # Calculate Risk Report
+        risk_report = self._risk_engine.calculate(check_results)
 
         finished_at = datetime.now(tz=timezone.utc)
         aggregate_status = self._aggregate_status(check_results)
@@ -79,6 +79,9 @@ class ScanOrchestrator:
             "scan_id": scan_id,
             "target": target,
             "aggregate_status": aggregate_status.value,
+            "trust_score": risk_report["trust_score"],
+            "risk_level": risk_report["risk_level"],
+            "insights": risk_report["insights"],
             "duration_ms": int((finished_at - started_at).total_seconds() * 1000),
             "started_at": started_at.isoformat(),
             "finished_at": finished_at.isoformat(),
@@ -86,11 +89,11 @@ class ScanOrchestrator:
         }
 
         logger.info(
-            "Scan completed id=%s target=%s status=%s duration_ms=%d",
+            "Scan completed id=%s target=%s trust_score=%d risk_level=%s",
             scan_id,
             target,
-            aggregate_status.value,
-            scan_event["duration_ms"],
+            risk_report["trust_score"],
+            risk_report["risk_level"]
         )
 
         # Broadcast to WebSocket clients
@@ -98,14 +101,8 @@ class ScanOrchestrator:
 
         return scan_event
 
-    # ── Private helpers ────────────────────────────────────────────────────
-
     @staticmethod
     def _aggregate_status(results: list[CheckResult]) -> CheckStatus:
-        """Worst status across all checks determines the overall health.
-
-        Priority: FAIL > ERROR > WARN > PASS
-        """
         priority = {
             CheckStatus.FAIL:  4,
             CheckStatus.ERROR: 3,

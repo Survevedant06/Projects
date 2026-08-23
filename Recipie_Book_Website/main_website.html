@@ -1,0 +1,521 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Recipes</title>
+    <link rel="icon" type="image/png" href="E:\VS_Code\logo.png">
+
+    <style>
+        body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #fefefe;
+        color: #333;
+        scroll-behavior: smooth;
+        }
+        header {
+        background-color: #ff6347;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        }
+        .search-bar {
+        margin: 20px auto;
+        text-align: center;
+        }
+        .search-bar input {
+        width: 90%;
+        max-width: 400px;
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        }
+        .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        padding: 20px;
+        }
+        .dish {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        }
+        .dish:hover {
+        transform: scale(1.05);
+        }
+        .dish img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+        }
+        .dish-title {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        font-size: 18px;
+        }
+        .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+        
+        }
+        .fav-filter-container {
+  text-align: center;
+  margin: 25px 0;
+}
+
+#toggleFavorites {
+  background: linear-gradient(to right, #ff8364, #ff6347);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 25px;
+  font-size: 17px;
+  font-family: 'Arial', sans-serif;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+#toggleFavorites:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 15px rgba(255, 99, 71, 0.4);
+}
+
+#toggleFavorites:active {
+  transform: scale(0.98);
+}
+
+.heart-icon {
+  margin-right: 8px;
+  display: inline-block;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.9; }
+}
+.favorite {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 22px;
+  color: white;
+  text-shadow: 1px 1px 5px black;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  z-index: 2;
+}
+
+.favorite.favorited {
+  color: red;
+}
+
+
+        .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        }
+        .close {
+        float: right;
+        font-size: 24px;
+        cursor: pointer;
+        }
+        #backToTop {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 15px;
+        background-color: #ff6347;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+        display: none;
+        z-index: 99;
+        .dish img {
+  transition: transform 0.3s ease;
+}
+
+.dish:hover img {
+  transform: scale(1.05);
+}
+@media (max-width: 600px) {
+  .modal-content {
+    width: 95%;
+    padding: 10px;
+  }
+}
+body {
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+}
+
+        }
+    </style>
+    </head>
+    <body>
+    <header>
+        <h1>Explore World Recipes</h1>
+        <p>Search for recipes from all around the globe</p>
+    </header>
+
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search your favorite dish...">
+    </div>
+<div id="loadingSpinner" style="text-align:center; display:none;">
+  <p>Loading more recipes...</p>
+</div>
+<div class="fav-filter-container">
+  <button id="toggleFavorites"><span class="heart-icon">❤️</span> Show Only Favorites</button>
+</div>
+
+</div>
+
+    <div class="gallery" id="dishGallery">
+    <div class="dish" data-title="Pizza - Italy" data-recipe="<b>Ingredients:</b><br>- Dough<br>- Tomato sauce<br>- Mozzarella<br>- Basil<br><br><b>Steps:</b><br>1. Spread sauce on dough.<br>2. Add cheese and basil.<br>3. Bake at 220°C for 15 mins.">
+        <img src="E:\VS_Code\Pizza.jpg">
+        <div class="dish-title">Pizza - Italy</div>
+    </div>
+
+    <div class="dish" data-title="Sushi - Japan" data-recipe="<b>Ingredients:</b><br>- Sushi rice<br>- Nori sheets<br>- Fish/vegetables<br><br><b>Steps:</b><br>1. Cook and season rice.<br>2. Place rice on nori, add fillings.<br>3. Roll and slice.">
+        <img src="E:\VS_Code\sushi.jpg">
+        <div class="dish-title">Sushi - Japan</div>
+    </div>
+
+    <div class="dish" data-title="Tacos - Mexico" data-recipe="<b>Ingredients:</b><br>- Tortillas<br>- Ground beef<br>- Lettuce, tomato, cheese<br><br><b>Steps:</b><br>1. Cook the beef with spices.<br>2. Fill tortillas with beef and toppings.<br>3. Serve warm.">
+        <img src="E:\VS_Code\taco.jpg">
+        <div class="dish-title">Tacos - Mexico</div>
+    </div>
+
+    <div class="dish" data-title="Curry - India" data-recipe="<b>Ingredients:</b><br>- Chicken<br>- Onion, tomato<br>- Spices (turmeric, garam masala)<br><br><b>Steps:</b><br>1. Sauté onions and spices.<br>2. Add chicken and tomatoes.<br>3. Cook until tender.">
+        <img src="E:\VS_Code\Curry.jpg">
+        <div class="dish-title">Curry - India</div>
+    </div>
+
+    <div class="dish" data-title="Paella - Spain" data-recipe="<b>Ingredients:</b><br>- Rice<br>- Seafood and chicken<br>- Saffron and peas<br><br><b>Steps:</b><br>1. Sauté meat and seafood.<br>2. Add rice and broth.<br>3. Cook until rice absorbs liquid.">
+        <img src="E:\VS_Code\paella.jpg">
+        <div class="dish-title">Paella - Spain</div>
+    </div>
+
+    <div class="dish" data-title="Ramen - Japan" data-recipe="<b>Ingredients:</b><br>- Noodles<br>- Broth<br>- Pork, egg, veggies<br><br><b>Steps:</b><br>1. Prepare broth.<br>2. Boil noodles.<br>3. Assemble with toppings.">
+        <img src="E:\VS_Code\ramen.jpg">
+        <div class="dish-title">Ramen - Japan</div>
+    </div>
+
+    <div class="dish" data-title="Burger - USA" data-recipe="<b>Ingredients:</b><br>- Burger buns<br>- Beef patty<br>- Lettuce, tomato, cheese<br><br><b>Steps:</b><br>1. Cook patty on grill.<br>2. Assemble with toppings.<br>3. Serve with fries.">
+        <img src="https://images.unsplash.com/photo-1550547660-d9450f859349" alt="Burger - USA">
+        <div class="dish-title">Burger - USA</div>
+    </div>
+
+    <div class="dish" data-title="Croissant - France" data-recipe="<b>Ingredients:</b><br>- Flour<br>- Butter<br>- Yeast, sugar<br><br><b>Steps:</b><br>1. Prepare dough and fold with butter.<br>2. Shape into crescents.<br>3. Bake until golden.">
+        <img src="E:\VS_Code\crossiant.jpg">
+        <div class="dish-title">Croissant - France</div>    
+
+    </div> <div class="dish" data-title="Bibimbap - Korea" data-recipe="<b>Ingredients:</b><br>- Rice<br>- Vegetables<br>- Egg, beef<br>- Gochujang (chili paste)<br><br><b>Steps:</b><br>1. Cook rice and toppings.<br>2. Arrange over rice.<br>3. Add egg and sauce.">
+    <img src="E:\VS_Code\bibimbap.jpg">
+    <div class="dish-title">Bibimbap - Korea</div>
+</div>
+
+    <div class="dish" data-title="Poutine - Canada" data-recipe="<b>Ingredients:</b><br>- Fries<br>- Cheese curds<br>- Gravy<br><br><b>Steps:</b><br>1. Fry potatoes.<br>2. Add cheese curds.<br>3. Pour hot gravy.">
+    <img src="E:\VS_Code\poutine.jpg">
+    <div class="dish-title">Poutine - Canada</div>
+</div>
+
+     <div class="dish" data-title="Falafel - Middle East" data-recipe="<b>Ingredients:</b><br>- Chickpeas<br>- Herbs, spices<br>- Onion, garlic<br><br><b>Steps:</b><br>1. Blend ingredients.<br>2. Shape into balls.<br>3. Deep fry.">
+    <img src="E:\VS_Code\falafel.jpg">
+    <div class="dish-title">Falafel - Middle East</div>
+</div>
+
+     <div class="dish" data-title="Goulash - Hungary" data-recipe="<b>Ingredients:</b><br>- Beef<br>- Onions, paprika<br>- Potatoes<br><br><b>Steps:</b><br>1. Brown beef.<br>2. Add spices and veggies.<br>3. Simmer until tender.">
+    <img src="E:\VS_Code\goulash.jpg">
+    <div class="dish-title">Goulash - Hungary</div>
+</div>
+
+     <div class="dish" data-title="Pho - Vietnam" data-recipe="<b>Ingredients:</b><br>- Rice noodles<br>- Beef or chicken<br>- Broth, herbs<br><br><b>Steps:</b><br>1. Make broth.<br>2. Cook noodles.<br>3. Assemble in a bowl.">
+    <img src="E:\VS_Code\pho.jpg">
+    <div class="dish-title">Pho - Vietnam</div>
+</div>
+
+     <div class="dish" data-title="Pierogi - Poland" data-recipe="<b>Ingredients:</b><br>- Dough<br>- Mashed potatoes, cheese<br><br><b>Steps:</b><br>1. Make and fill dough.<br>2. Boil and pan-fry.<br>3. Serve warm.">
+    <img src="E:\VS_Code\pierogoi.jpg">
+    <div class="dish-title">Pierogi - Poland</div>
+</div>
+
+     <div class="dish" data-title="Biryani - India" data-recipe="<b>Ingredients:</b><br>- Basmati rice<br>- Chicken or mutton<br>- Spices, yogurt<br><br><b>Steps:</b><br>1. Cook meat with spices.<br>2. Layer with rice.<br>3. Cook on low flame.">
+    <img src="E:\VS_Code\biryani.jpg">
+    <div class="dish-title">Biryani - India</div>
+</div>
+
+     <div class="dish" data-title="Empanadas - Argentina" data-recipe="<b>Ingredients:</b><br>- Dough<br>- Ground beef<br>- Onion, spices<br><br><b>Steps:</b><br>1. Make filling.<br>2. Fill dough and seal.<br>3. Bake or fry.">
+    <img src="E:\VS_Code\empanadas.jpg">
+    <div class="dish-title">Empanadas - Argentina</div>
+</div>
+
+     <div class="dish" data-title="Tom Yum Soup - Thailand" data-recipe="<b>Ingredients:</b><br>- Lemongrass, lime<br>- Shrimp, mushrooms<br>- Chili paste<br><br><b>Steps:</b><br>1. Boil broth with herbs.<br>2. Add shrimp and veggies.<br>3. Season to taste.">
+    <img src="E:\VS_Code\tom_yum.jpg">
+    <div class="dish-title">Tom Yum - Thailand</div>
+</div>
+
+     <div class="dish" data-title="Shakshuka - Middle East" data-recipe="<b>Ingredients:</b><br>- Tomatoes<br>- Onions, peppers<br>- Eggs<br><br><b>Steps:</b><br>1. Cook veggies in pan.<br>2. Crack eggs on top.<br>3. Cover and cook.">
+    <img src="E:\VS_Code\shakshuka.jpg">
+    <div class="dish-title">Shakshuka - Middle East</div>
+</div>
+      <div class="dish" data-title="Lasagna - Italy" data-recipe="<b>Ingredients:</b><br>- Lasagna noodles<br>- Ground beef<br>- Tomato sauce<br>- Cheese<br><br><b>Steps:</b><br>1. Cook meat and sauce.<br>2. Layer noodles, sauce, cheese.<br>3. Bake for 45 mins.">
+    <img src="E:\VS_Code\lasagana.jpg">
+    <div class="dish-title">Lasagna - Italy</div>
+</div>
+
+<div class="dish" data-title="Shawarma - Middle East" data-recipe="<b>Ingredients:</b><br>- Chicken or beef<br>- Pita bread<br>- Garlic sauce, veggies<br><br><b>Steps:</b><br>1. Marinate and grill meat.<br>2. Fill pita with toppings.<br>3. Roll and serve.">
+    <img src="E:\VS_Code\shawrma.jpg">
+    <div class="dish-title">Shawarma - Middle East</div>
+</div>
+
+<div class="dish" data-title="Tamales - Mexico" data-recipe="<b>Ingredients:</b><br>- Corn dough<br>- Meat filling<br>- Corn husks<br><br><b>Steps:</b><br>1. Spread dough in husks.<br>2. Add filling and fold.<br>3. Steam for 1 hour.">
+    <img src="E:\VS_Code\tamales.jpg">
+    <div class="dish-title">Tamales - Mexico</div>
+</div>
+
+<div class="dish" data-title="Baklava - Turkey" data-recipe="<b>Ingredients:</b><br>- Phyllo dough<br>- Nuts<br>- Honey syrup<br><br><b>Steps:</b><br>1. Layer dough and nuts.<br>2. Bake.<br>3. Pour syrup after baking.">
+    <img src="E:\VS_Code\baklava.jpg">
+    <div class="dish-title">Baklava - Turkey</div>
+</div>
+
+<div class="dish" data-title="Churros - Spain" data-recipe="<b>Ingredients:</b><br>- Flour<br>- Butter<br>- Cinnamon sugar<br><br><b>Steps:</b><br>1. Make dough and pipe.<br>2. Fry until golden.<br>3. Roll in cinnamon sugar.">
+    <img src="E:\VS_Code\churros.jpg">
+    <div class="dish-title">Churros - Spain</div>
+</div>
+
+<div class="dish" data-title="Kimchi - Korea" data-recipe="<b>Ingredients:</b><br>- Napa cabbage<br>- Salt<br>- Chili flakes, garlic<br><br><b>Steps:</b><br>1. Salt the cabbage.<br>2. Mix with spices.<br>3. Ferment for days.">
+    <img src="E:\VS_Code\kimchi.jpg">
+    <div class="dish-title">Kimchi - Korea</div>
+</div>
+
+<div class="dish" data-title="Ceviche - Peru" data-recipe="<b>Ingredients:</b><br>- Raw fish<br>- Lime juice<br>- Onion, cilantro<br><br><b>Steps:</b><br>1. Marinate fish in lime juice.<br>2. Add onions and herbs.<br>3. Serve chilled.">
+    <img src="E:\VS_Code\ceviche.jpg">
+    <div class="dish-title">Ceviche - Peru</div>
+</div>
+
+<div class="dish" data-title="Kebab - Middle East" data-recipe="<b>Ingredients:</b><br>- Ground meat<br>- Spices<br>- Skewers<br><br><b>Steps:</b><br>1. Mix meat with spices.<br>2. Shape on skewers.<br>3. Grill over flame.">
+    <img src="E:\VS_Code\kebab.jpg">
+    <div class="dish-title">Kebab - Middle East</div>
+</div>
+
+<div class="dish" data-title="Samosa - India" data-recipe="<b>Ingredients:</b><br>- Dough<br>- Potato filling<br>- Spices<br><br><b>Steps:</b><br>1. Make filling.<br>2. Wrap in dough.<br>3. Deep fry till golden.">
+    <img src="E:\VS_Code\Samosa.jpg">
+    <div class="dish-title">Samosa - India</div>
+</div>
+
+<div class="dish" data-title="Moussaka - Greece" data-recipe="<b>Ingredients:</b><br>- Eggplant<br>- Ground meat<br>- Béchamel sauce<br><br><b>Steps:</b><br>1. Cook layers.<br>2. Stack eggplant, meat, sauce.<br>3. Bake until set.">
+    <img src="E:\VS_Code\moussaka.jpg">
+    <div class="dish-title">Moussaka - Greece</div>
+</div>
+<div class="dish" data-title="Butter Chicken - India" data-recipe="<b>Ingredients:</b><br>- Chicken (boneless)<br>- Butter<br>- Onion, tomato puree<br>- Cream<br>- Ginger-garlic paste<br>- Spices (turmeric, garam masala, chili powder)<br><br><b>Steps:</b><br>1. Marinate chicken with yogurt and spices.<br>2. Grill or cook chicken pieces.<br>3. Prepare sauce with butter, onion, tomato puree, cream, and spices.<br>4. Add chicken to sauce and simmer until cooked.">  
+    <img src="E:\VS_Code\ButterChicken.jpg">  
+    <div class="dish-title">Butter Chicken - India</div>  
+</div>
+
+
+
+<div class="dish" data-title="Pad Thai - Thailand" data-recipe="<b>Ingredients:</b><br>- Rice noodles<br>- Shrimp or chicken<br>- Bean sprouts, egg<br>- Tamarind sauce, peanuts<br><br><b>Steps:</b><br>1. Soak noodles.<br>2. Stir-fry with protein and egg.<br>3. Add sauce and toppings.">
+    <img src="E:\VS_Code\padthai.jpg">
+    <div class="dish-title">Pad Thai - Thailand</div>
+</div>
+
+<div class="dish" data-title="Clam Chowder - USA" data-recipe="<b>Ingredients:</b><br>- Clams<br>- Potatoes<br>- Onion, celery<br>- Cream, butter<br><br><b>Steps:</b><br>1. Sauté onions and celery.<br>2. Add potatoes and clams.<br>3. Stir in cream and simmer.">
+    <img src="E:\VS_Code\clamchowder.jpg">
+    <div class="dish-title">Clam Chowder - USA</div>
+</div>
+
+<div class="dish" data-title="Arepas - Venezuela" data-recipe="<b>Ingredients:</b><br>- Cornmeal dough<br>- Cheese, beans, or meat<br><br><b>Steps:</b><br>1. Shape dough into patties.<br>2. Cook on skillet.<br>3. Split and fill with toppings.">
+    <img src="E:\VS_Code\arepas.jpg">
+    <div class="dish-title">Arepas - Venezuela</div>
+</div>
+
+<div class="dish" data-title="Dolma - Middle East" data-recipe="<b>Ingredients:</b><br>- Grape leaves<br>- Rice<br>- Herbs, spices<br><br><b>Steps:</b><br>1. Prepare rice filling.<br>2. Roll in grape leaves.<br>3. Steam until tender.">
+    <img src="E:\VS_Code\dolma.jpg">
+    <div class="dish-title">Dolma - Middle East</div>
+</div>
+
+<div class="dish" data-title="Okonomiyaki - Japan" data-recipe="<b>Ingredients:</b><br>- Cabbage<br>- Flour, egg<br>- Pork or seafood<br>- Okonomiyaki sauce<br><br><b>Steps:</b><br>1. Mix cabbage batter.<br>2. Cook pancake on griddle.<br>3. Add toppings and sauce.">
+    <img src="E:\VS_Code\okonomiyaki.jpg">
+    <div class="dish-title">Okonomiyaki - Japan</div>
+</div>
+
+<div class="dish" data-title="Tagine - Morocco" data-recipe="<b>Ingredients:</b><br>- Lamb or chicken<br>- Vegetables<br>- Spices (cumin, cinnamon)<br><br><b>Steps:</b><br>1. Brown meat with spices.<br>2. Add veggies.<br>3. Slow cook in tagine pot.">
+    <img src="E:\VS_Code\tagine.jpg">
+    <div class="dish-title">Tagine - Morocco</div>
+</div>
+
+<div class="dish" data-title="Pav Bhaji - India" data-recipe="<b>Ingredients:</b><br>- Mixed vegetables<br>- Butter<br>- Pav buns<br>- Spices<br><br><b>Steps:</b><br>1. Cook and mash vegetables.<br>2. Add butter and spices.<br>3. Serve with toasted pav buns.">
+    <img src="E:\VS_Code\pavbhaji.jpg">
+    <div class="dish-title">Pav Bhaji - India</div>
+</div>
+
+<div class="dish" data-title="Fufu with Soup - West Africa" data-recipe="<b>Ingredients:</b><br>- Cassava or yam flour<br>- Water<br>- Soup (peanut, okra, or tomato-based)<br><br><b>Steps:</b><br>1. Cook flour into dough.<br>2. Roll into balls.<br>3. Serve with soup.">
+    <img src="E:\VS_Code\fufu.jpg">
+    <div class="dish-title">Fufu with Soup - West Africa</div>
+</div>
+
+<div class="dish" data-title="Katsu Curry - Japan" data-recipe="<b>Ingredients:</b><br>- Breaded pork/chicken cutlet<br>- Curry sauce<br>- Rice<br><br><b>Steps:</b><br>1. Fry breaded cutlet.<br>2. Make Japanese curry sauce.<br>3. Serve with rice and cutlet.">
+    <img src="E:\VS_Code\katsucurry.jpg">
+    <div class="dish-title">Katsu Curry - Japan</div>
+</div>
+
+<div class="dish" data-title="Momo - Nepal" data-recipe="<b>Ingredients:</b><br>- Dough<br>- Meat or veg filling<br>- Spices<br><br><b>Steps:</b><br>1. Make dumpling wrappers.<br>2. Fill with mixture.<br>3. Steam or fry.">
+    <img src="E:\VS_Code\momo.jpg">
+    <div class="dish-title">Momo - Nepal</div>
+</div>
+
+<div class="dish" data-title="Feijoada - Brazil" data-recipe="<b>Ingredients:</b><br>- Black beans<br>- Pork and beef<br>- Onion, garlic<br><br><b>Steps:</b><br>1. Cook beans with meat.<br>2. Add seasonings.<br>3. Simmer until rich and thick.">
+    <img src="E:\VS_Code\feijoada.jpg">
+    <div class="dish-title">Feijoada - Brazil</div>
+</div>
+
+<div class="dish" data-title="Haggis - Scotland" data-recipe="<b>Ingredients:</b><br>- Sheep’s pluck (heart, liver, lungs)<br>- Oats, onion<br>- Spices<br><br><b>Steps:</b><br>1. Mince organs with oats.<br>2. Stuff in casing.<br>3. Boil until cooked.">
+    <img src="E:\VS_Code\haggis.jpg">
+    <div class="dish-title">Haggis - Scotland</div>
+</div>
+
+<div class="dish" data-title="Pierna al Horno - Puerto Rico" data-recipe="<b>Ingredients:</b><br>- Pork leg<br>- Garlic, oregano<br>- Olive oil<br><br><b>Steps:</b><br>1. Marinate pork.<br>2. Roast slowly.<br>3. Serve sliced with sides.">
+    <img src="E:\VS_Code\pierna.jpg">
+    <div class="dish-title">Pierna al Horno - Puerto Rico</div>
+</div>
+
+
+
+
+      
+</div>
+
+
+    <button id="backToTop" title="Back to top">↑</button>
+
+    <div id="recipeModal" class="modal">
+        <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <h2 id="recipeTitle"></h2>
+        <p id="recipeDetails"></p>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const gallery = document.getElementById('dishGallery');
+        const dishes = Array.from(gallery.getElementsByClassName('dish'));
+        const modal = document.getElementById("recipeModal");
+        const modalTitle = document.getElementById("recipeTitle");
+        const modalDetails = document.getElementById("recipeDetails");
+        const closeModal = document.getElementById("closeModal");
+        const backToTop = document.getElementById("backToTop");
+
+        searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        dishes.forEach(dish => {
+            const title = dish.querySelector('.dish-title').textContent.toLowerCase();
+            dish.style.display = title.includes(query) ? '' : 'none';
+        });
+        });
+
+        dishes.forEach(dish => {
+        dish.addEventListener('click', () => {
+            const title = dish.getAttribute('data-title');
+            const recipe = dish.getAttribute('data-recipe');
+            modalTitle.innerHTML = title;
+            modalDetails.innerHTML = recipe;
+            modal.style.display = 'flex';
+        });
+        });
+
+        closeModal.addEventListener('click', () => {
+        modal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+        });
+
+        window.addEventListener('scroll', () => {
+        backToTop.style.display = window.scrollY > 300 ? 'block' : 'none';
+        });
+
+        backToTop.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ✅ Step 2: Favorite icon logic
+const favoriteSet = new Set();
+const toggleButton = document.getElementById("toggleFavorites");
+
+dishes.forEach(dish => {
+  // Create a favorite icon
+  const fav = document.createElement("div");
+  fav.classList.add("favorite");
+  fav.innerHTML = "&#10084;"; // heart symbol
+
+  // Add to dish
+  dish.appendChild(fav);
+
+  // Stop modal from opening when clicking heart
+  fav.addEventListener("click", (e) => {
+    e.stopPropagation(); // stop click from opening modal
+    const title = dish.getAttribute("data-title");
+
+    if (favoriteSet.has(title)) {
+      favoriteSet.delete(title);
+      fav.classList.remove("favorited");
+    } else {
+      favoriteSet.add(title);
+      fav.classList.add("favorited");
+    }
+  });
+});
+toggleButton.addEventListener("click", () => {
+  const showOnlyFavorites = toggleButton.classList.toggle("active");
+
+  dishes.forEach(dish => {
+    const title = dish.getAttribute("data-title");
+    const isFavorite = favoriteSet.has(title);
+    dish.style.display = showOnlyFavorites ? (isFavorite ? "" : "none") : "";
+  });
+
+  toggleButton.textContent = showOnlyFavorites
+    ? "Show All Dishes"
+    : "Show Only Favorites";
+});
+
+    </script>
+    </body>
+    </html>

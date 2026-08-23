@@ -14,6 +14,7 @@ class CheckResult:
     check_name: str
     status: CheckStatus
     detail: str
+    weight: int = 0  # Penalty points (e.g. 10 for missing HSTS, 50 for malware flag)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -21,6 +22,7 @@ class CheckResult:
             "check_name": self.check_name,
             "status": self.status.value,
             "detail": self.detail,
+            "weight": self.weight,
             "metadata": self.metadata,
         }
 

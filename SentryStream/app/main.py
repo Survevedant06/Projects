@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.models import Target, ScanResult
 import logging
 import asyncio
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +80,13 @@ async def publish_scan_event(event: dict) -> None:
                     target_id=target.id,
                     scan_id=event["scan_id"],
                     aggregate_status=event["aggregate_status"],
+                    trust_score=event.get("trust_score", 100),
+                    risk_level=event.get("risk_level", "Low"),
                     duration_ms=event["duration_ms"],
                     started_at=datetime.fromisoformat(event["started_at"]),
                     finished_at=datetime.fromisoformat(event["finished_at"]),
-                    checks=event["checks"]
+                    checks=event["checks"],
+                    insights=event.get("insights", [])
                 )
                 session.add(result)
                 target.last_scanned_at = result.finished_at
@@ -117,6 +121,9 @@ class TargetCreate(BaseModel):
     url: str
     label: Optional[str] = None
 
+class TargetUpdate(BaseModel):
+    label: Optional[str] = None
+
 @app.get("/api/v1/targets", response_model=List[Target])
 async def list_targets(session: Session = Depends(get_session)):
     return session.exec(select(Target)).all()
@@ -141,6 +148,18 @@ async def delete_target(target_id: int, session: Session = Depends(get_session))
     session.commit()
     return {"message": "Target deleted"}
 
+@app.patch("/api/v1/targets/{target_id}", response_model=Target)
+async def update_target(target_id: int, data: TargetUpdate, session: Session = Depends(get_session)):
+    target = session.get(Target, target_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="Target not found")
+    if data.label is not None:
+        target.label = data.label
+    session.add(target)
+    session.commit()
+    session.refresh(target)
+    return target
+
 @app.post("/api/v1/scans", status_code=202)
 async def trigger_scan(
     background_tasks: BackgroundTasks,
@@ -152,15 +171,35 @@ async def trigger_scan(
     
     orchestrator = ScanOrchestrator(publish_fn=publish_scan_event)
     for t in targets:
-        import uuid
         scan_id = str(uuid.uuid4())
         background_tasks.add_task(orchestrator.run_scan, t.url, scan_id)
 
     return {"message": f"Scans queued for {len(targets)} target(s)"}
 
+@app.post("/api/v1/scans/target/{target_id}", status_code=202)
+async def trigger_single_scan(
+    target_id: int,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_session)
+):
+    target = session.get(Target, target_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="Target not found")
+    orchestrator = ScanOrchestrator(publish_fn=publish_scan_event)
+    scan_id = str(uuid.uuid4())
+    background_tasks.add_task(orchestrator.run_scan, target.url, scan_id)
+    return {"message": f"Scan queued for {target.url}", "scan_id": scan_id}
+
 @app.get("/api/v1/scans/history", response_model=List[ScanResult])
 async def get_scan_history(limit: int = 50, session: Session = Depends(get_session)):
     return session.exec(select(ScanResult).order_by(ScanResult.finished_at.desc()).limit(limit)).all()
+
+@app.get("/api/v1/scans/history/{target_id}", response_model=List[ScanResult])
+async def get_target_scan_history(target_id: int, limit: int = 20, session: Session = Depends(get_session)):
+    return session.exec(
+        select(ScanResult).where(ScanResult.target_id == target_id)
+        .order_by(ScanResult.finished_at.desc()).limit(limit)
+    ).all()
 
 # ── WebSocket Endpoint ────────────────────────────────────────────────────────
 @app.websocket("/ws/scans")

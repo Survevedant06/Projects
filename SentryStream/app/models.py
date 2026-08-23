@@ -18,11 +18,14 @@ class ScanResult(SQLModel, table=True):
     target_id: int = Field(foreign_key="target.id")
     scan_id: str = Field(index=True)
     aggregate_status: str
+    trust_score: int = Field(default=100)
+    risk_level: str = Field(default="Low")
     duration_ms: int
     started_at: datetime
     finished_at: datetime
     
-    # Store the list of check results as JSON
+    # Store the list of check results and insights as JSON
     checks: List[dict] = Field(default_factory=list, sa_column=Column(JSON))
+    insights: List[str] = Field(default_factory=list, sa_column=Column(JSON))
 
     target_rel: Target = Relationship(back_populates="results")

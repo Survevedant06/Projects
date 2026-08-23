@@ -1,0 +1,252 @@
+<!-- This HTML code integrates your local dish list into the dynamic JavaScript-rendered gallery -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Global Recipe Gallery</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f9f9f9;
+    }
+
+    .search-bar {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .search-bar input {
+      padding: 10px;
+      width: 300px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .toggle-fav {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .dish {
+      width: 250px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+      text-align: center;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .dish:hover {
+      transform: scale(1.03);
+    }
+
+    .dish img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+
+    .dish-title {
+      padding: 10px;
+      font-weight: bold;
+      position: relative;
+    }
+
+    .favorite {
+      float: right;
+      cursor: pointer;
+      font-size: 20px;
+      color: gray;
+      transition: color 0.3s;
+    }
+
+    .favorite.favorited {
+      color: red;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.7);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    .close {
+      color: red;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .dish {
+        width: 45%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .dish {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search your favorite dish...">
+  </div>
+
+  <div class="toggle-fav">
+    <label><input type="checkbox" id="showFavOnly"> Show Favorites Only</label>
+  </div>
+
+  <div class="gallery" id="dishGallery"></div>
+
+  <div id="recipeModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modalTitle"></h2>
+      <p id="modalRecipe"></p>
+    </div>
+  </div>
+
+  <script>
+    const recipeList = [
+      // Full list from local dish HTML — UPDATE image paths as needed
+      {
+        title: "Pizza - Italy",
+        img: "E:/VS_Code/Pizza.jpg",
+        recipe: `<b>Ingredients:</b><br>- Dough<br>- Tomato sauce<br>- Mozzarella<br>- Basil<br><br><b>Steps:</b><br>1. Spread sauce on dough.<br>2. Add cheese and basil.<br>3. Bake at 220°C for 15 mins.`
+      },
+      {
+        title: "Sushi - Japan",
+        img: "E:/VS_Code/sushi.jpg",
+        recipe: `<b>Ingredients:</b><br>- Sushi rice<br>- Nori sheets<br>- Fish/vegetables<br><br><b>Steps:</b><br>1. Cook and season rice.<br>2. Place rice on nori, add fillings.<br>3. Roll and slice.`
+      },
+      {
+        title: "Tacos - Mexico",
+        img: "E:/VS_Code/taco.jpg",
+        recipe: `<b>Ingredients:</b><br>- Sushi rice<br>- Nori sheets<br>- Fish/vegetables<br><br><b>Steps:</b><br>1. Cook and season rice.<br>2. Place rice on nori, add fillings.<br>3. Roll and slice.`
+      },
+    ];
+
+    let loaded = 0;
+    const BATCH = 8;
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+    function loadRecipes() {
+      const showFavOnly = document.getElementById("showFavOnly").checked;
+      for (let i = loaded; i < loaded + BATCH && i < recipeList.length; i++) {
+        if (showFavOnly && !favorites.includes(i)) continue;
+
+        const dish = document.createElement('div');
+        dish.className = 'dish';
+        dish.setAttribute('data-title', recipeList[i].title);
+        dish.setAttribute('data-recipe', recipeList[i].recipe);
+        dish.innerHTML = `
+          <img src="${recipeList[i].img}" alt="${recipeList[i].title}">
+          <div class="dish-title">
+            ${recipeList[i].title}
+            <span class="favorite" data-id="${i}">&#10084;</span>
+          </div>
+        `;
+        document.getElementById('dishGallery').appendChild(dish);
+      }
+      loaded += BATCH;
+      attachFavoriteListeners();
+      updateFavoriteIcons();
+    }
+
+    function toggleFavorite(id) {
+      const index = favorites.indexOf(id);
+      if (index >= 0) {
+        favorites.splice(index, 1);
+      } else {
+        favorites.push(id);
+      }
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      updateFavoriteIcons();
+    }
+
+    function updateFavoriteIcons() {
+      document.querySelectorAll('.favorite').forEach(fav => {
+        const id = parseInt(fav.getAttribute('data-id'));
+        if (favorites.includes(id)) {
+          fav.classList.add('favorited');
+        } else {
+          fav.classList.remove('favorited');
+        }
+      });
+    }
+
+    function attachFavoriteListeners() {
+      document.querySelectorAll('.favorite').forEach(fav => {
+        fav.onclick = (e) => {
+          e.stopPropagation();
+          toggleFavorite(parseInt(fav.getAttribute('data-id')));
+        };
+      });
+    }
+
+    // Modal
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('.dish') && !e.target.classList.contains('favorite')) {
+        const dish = e.target.closest('.dish');
+        document.getElementById('modalTitle').innerHTML = dish.getAttribute('data-title');
+        document.getElementById('modalRecipe').innerHTML = dish.getAttribute('data-recipe');
+        document.getElementById('recipeModal').style.display = 'block';
+      }
+    });
+
+    document.querySelector('.close').onclick = function () {
+      document.getElementById('recipeModal').style.display = 'none';
+    };
+
+    window.onclick = function (event) {
+      if (event.target == document.getElementById('recipeModal')) {
+        document.getElementById('recipeModal').style.display = 'none';
+      }
+    };
+
+    window.addEventListener('scroll', () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+        loadRecipes();
+      }
+    });
+
+    document.getElementById("showFavOnly").addEventListener("change", () => {
+      document.getElementById("dishGallery").innerHTML = "";
+      loaded = 0;
+      loadRecipes();
+    });
+
+    loadRecipes();
+  </script>
+</body>
+</html>

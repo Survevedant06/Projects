@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explore Global Dishes | World Recipes</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Explore World Recipes</h1>
+    <p>Search for recipes from all around the globe</p>
+  </header>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search your favorite dish..." />
+  </div>
+
+  <main class="gallery" id="dishGallery">
+    <!-- Initial 8 dishes -->
+    <article class="dish" data-title="Pizza - Italy" data-recipe="<b>Ingredients:</b><br>- Dough<br>- Tomato sauce<br>- Mozzarella<br>- Basil<br><br><b>Steps:</b><br>1. Spread sauce on dough.<br>2. Add cheese and basil.<br>3. Bake at 220°C for 15 mins.">
+      <img src="https://images.unsplash.com/photo-1601924579440-5835867b47ba" alt="Pizza - Italy" loading="lazy" />
+      <div class="dish-title">Pizza - Italy</div>
+    </article>
+    <article class="dish" data-title="Sushi - Japan" data-recipe="<b>Ingredients:</b><br>- Sushi rice<br>- Nori sheets<br>- Fish/vegetables<br><br><b>Steps:</b><br>1. Cook and season rice.<br>2. Place rice on nori, add fillings.<br>3. Roll and slice.">
+      <img src="https://images.unsplash.com/photo-1562158070-622a1efb98d4" alt="Sushi - Japan" loading="lazy" />
+      <div class="dish-title">Sushi - Japan</div>
+    </article>
+    <article class="dish" data-title="Tacos - Mexico" data-recipe="<b>Ingredients:</b><br>- Tortillas<br>- Ground beef<br>- Lettuce, tomato, cheese<br><br><b>Steps:</b><br>1. Cook the beef with spices.<br>2. Fill tortillas with beef and toppings.<br>3. Serve warm.">
+      <img src="https://images.unsplash.com/photo-1600891964599-f61ba0e24092" alt="Tacos - Mexico" loading="lazy" />
+      <div class="dish-title">Tacos - Mexico</div>
+    </article>
+    <article class="dish" data-title="Curry - India" data-recipe="<b>Ingredients:</b><br>- Chicken<br>- Onion, tomato<br>- Spices (turmeric, garam masala)<br><br><b>Steps:</b><br>1. Sauté onions and spices.<br>2. Add chicken and tomatoes.<br>3. Cook until tender.">
+      <img src="https://images.unsplash.com/photo-1589302168068-964664d93dc0" alt="Curry - India" loading="lazy" />
+      <div class="dish-title">Curry - India</div>
+    </article>
+    <article class="dish" data-title="Paella - Spain" data-recipe="<b>Ingredients:</b><br>- Rice<br>- Seafood and chicken<br>- Saffron and peas<br><br><b>Steps:</b><br>1. Sauté meat and seafood.<br>2. Add rice and broth.<br>3. Cook until rice absorbs liquid.">
+      <img src="https://images.unsplash.com/photo-1588167056547-bc4f8971f41c" alt="Paella - Spain" loading="lazy" />
+      <div class="dish-title">Paella - Spain</div>
+    </article>
+    <article class="dish" data-title="Ramen - Japan" data-recipe="<b>Ingredients:</b><br>- Noodles<br>- Broth<  >- Pork, egg, veggies<br><br><b>Steps:</b><br>1. Prepare broth.<br>2. Boil noodles.<br>3. Assemble with toppings.">
+      <img src="https://images.unsplash.com/photo-1603133872878-684f8a4ebc7b" alt="Ramen - Japan" loading="lazy" />
+      <div class="dish-title">Ramen - Japan</div>
+    </article>
+    <article class="dish" data-title="Burger - USA" data-recipe="<b>Ingredients:</b><br>- Burger buns<br>- Beef patty<br>- Lettuce, tomato, cheese<br><br><b>Steps:</b><br>1. Cook patty on grill.<br>2. Assemble with toppings.<br>3. Serve with fries.">
+      <img src="https://images.unsplash.com/photo-1550547660-d9450f859349" alt="Burger - USA" loading="lazy" />
+      <div class="dish-title">Burger - USA</div>
+    </article>
+    <article class="dish" data-title="Croissant - France" data-recipe="<b>Ingredients:</b><br>- Flour<br>- Butter<br>- Yeast, sugar<br><br><b>Steps:</b><br>1. Prepare dough and fold with butter.<br>2. Shape into crescents.<br>3. Bake until golden.">
+      <img src="https://images.unsplash.com/photo-1508739826987-b79cd8b7da12" alt="Croissant - France" loading="lazy" />
+      <div class="dish-title">Croissant - France</div>
+    </article>
+  </main>
+
+  <button id="backToTop" title="Back to top">↑</button>
+
+  <div id="recipeModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h2 id="recipeTitle"></h2>
+      <p id="recipeDetails"></p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

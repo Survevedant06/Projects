@@ -68,7 +68,9 @@ class SSLChecker(BaseChecker):
         ctx = ssl.create_default_context()
         with socket.create_connection((hostname, 443), timeout=10) as sock:
             with ctx.wrap_socket(sock, server_hostname=hostname) as tls_sock:
-                return tls_sock.getpeercert()
+                cert = tls_sock.getpeercert()
+                cert["protocol"] = tls_sock.version()
+                return cert
 
     @staticmethod
     def _evaluate(hostname: str, cert: dict) -> CheckResult:
@@ -88,32 +90,52 @@ class SSLChecker(BaseChecker):
         days_remaining = (expiry - now).days
 
         subject = dict(x[0] for x in cert.get("subject", []))
+        issuer = dict(x[0] for x in cert.get("issuer", []))
         common_name = subject.get("commonName", hostname)
+        issuer_name = issuer.get("organizationName", "Unknown Issuer")
+        protocol = cert.get("protocol", "Unknown")
 
         metadata = {
             "hostname": hostname,
             "common_name": common_name,
+            "issuer": issuer_name,
+            "protocol": protocol,
             "expires_at": expiry.isoformat(),
             "days_remaining": days_remaining,
         }
 
+        # 1. Expiry Check
         if days_remaining < 0:
             return CheckResult(
                 check_name="ssl_certificate",
                 status=CheckStatus.FAIL,
+                weight=80,
                 detail=f"Certificate EXPIRED {abs(days_remaining)} day(s) ago.",
                 metadata=metadata,
             )
+        
+        # 2. Protocol Check (TLS 1.0/1.1 are deprecated)
+        if protocol in ("TLSv1", "TLSv1.1"):
+            return CheckResult(
+                check_name="ssl_certificate",
+                status=CheckStatus.FAIL,
+                weight=40,
+                detail=f"Deprecated protocol {protocol} in use. Upgrade to TLS 1.2+.",
+                metadata=metadata,
+            )
+
         if days_remaining <= EXPIRY_WARN_THRESHOLD_DAYS:
             return CheckResult(
                 check_name="ssl_certificate",
                 status=CheckStatus.WARN,
+                weight=20,
                 detail=f"Certificate expires in {days_remaining} day(s). Renew soon.",
                 metadata=metadata,
             )
+
         return CheckResult(
             check_name="ssl_certificate",
             status=CheckStatus.PASS,
-            detail=f"Certificate valid for {days_remaining} more day(s).",
+            detail=f"Valid {protocol} certificate by {issuer_name}. Expires in {days_remaining} days.",
             metadata=metadata,
         )

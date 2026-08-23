@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import 'leaflet/dist/leaflet.css';
+
+:root {
+  --bg-primary: #F8F5F0;
+  --bg-surface: #FFFFFF;
+  --bg-card: #F1ECE4;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --border-color: #E2DCD5;
+  --accent-teal: #0284C7;
+  --accent-sienna: #EA580C;
+}
+
+body {
+  background-color: #0F172A;
+  color: #F8F5F0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar in Sand / Indigo */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090D16;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0284C7;
+}
+
+/* Leaflet dark styling overrides */
+.leaflet-container {
+  background: #090D16 !important;
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #0F172A !important;
+  color: #F8F5F0 !important;
+  border: 1px solid #243247 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.7) !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-tip {
+  background: #0F172A !important;
+  border: 1px solid #243247 !important;
+}
+
+.leaflet-popup-content {
+  margin: 8px !important;
+  line-height: 1.4 !important;
+}
+
+/* Custom marker wrappers */
+.custom-leaflet-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Hide scrollbars for pill bars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

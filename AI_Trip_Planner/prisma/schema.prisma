@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  trips         Trip[]
+}
+
+model Trip {
+  id                  String    @id @default(cuid())
+  userId              String?
+  user                User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title               String
+  destination         String
+  startDate           String?
+  endDate             String?
+  duration            Int       @default(3)
+  budgetTier          String    @default("Moderate")
+  currency            String    @default("USD")
+  groupSize           Int       @default(1)
+  travelStyle         String    @default("Exploration")
+  totalEstimatedCost  Float?
+  summary             String?
+  bestTimeToVisit     String?
+  weatherAdvice       String?
+  packingList         String?   // JSON array string
+  localEtiquette      String?   // JSON array string
+  shareSlug           String    @unique @default(cuid())
+  isPublic            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  dayPlans            DayPlan[]
+}
+
+model DayPlan {
+  id                      String     @id @default(cuid())
+  tripId                  String
+  trip                    Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  dayNumber               Int
+  date                    String?
+  title                   String
+  theme                   String?
+  breakfastRecommendation String?
+  lunchRecommendation     String?
+  dinnerRecommendation    String?
+  dailyTip                String?
+  activities              Activity[]
+}
+
+model Activity {
+  id              String   @id @default(cuid())
+  dayPlanId       String
+  dayPlan         DayPlan  @relation(fields: [dayPlanId], references: [id], onDelete: Cascade)
+  timeSlot        String   // "morning" | "afternoon" | "evening"
+  name            String
+  description     String
+  category        String?  // "Sightseeing", "Food", "Adventure", "Culture", "Relaxation"
+  locationName    String
+  latitude        Float?
+  longitude       Float?
+  estimatedCost   Float?
+  durationMinutes Int?
+  googlePlaceId   String?
+  rating          Float?
+  userNotes       String?
+  orderIndex      Int      @default(0)
+}
