@@ -25,16 +25,22 @@ function buildOverpassQuery(radiusMeters: number, lat: number, lng: number): str
   nwr["amenity"="library"](around:${radiusMeters},${lat},${lng});
   nwr["amenity"="internet_cafe"](around:${radiusMeters},${lat},${lng});
   
-  // Secondary Hospitality & Food Outlets
-  nwr["amenity"="restaurant"]["cuisine"~"coffee|cafe|tea|bakery",i](around:${radiusMeters},${lat},${lng});
-  nwr["amenity"="fast_food"]["cuisine"~"coffee|cafe|bakery",i](around:${radiusMeters},${lat},${lng});
+  // Secondary Hospitality, Food & Snack Outlets
+  nwr["amenity"="restaurant"]["cuisine"~"coffee|cafe|tea|bakery|ice_cream|fast_food",i](around:${radiusMeters},${lat},${lng});
+  nwr["amenity"="fast_food"]["cuisine"~"coffee|cafe|bakery|tea|snacks",i](around:${radiusMeters},${lat},${lng});
+  nwr["amenity"="ice_cream"](around:${radiusMeters},${lat},${lng});
   nwr["tourism"="hotel"]["internet_access"](around:${radiusMeters},${lat},${lng});
 
-  // Speciality Coffee, Bakeries & Tea Rooms
+  // Speciality Coffee, Bakeries, Beverages & Tea Rooms
   nwr["shop"="coffee"](around:${radiusMeters},${lat},${lng});
-  nwr["shop"="bakery"]["cafe"](around:${radiusMeters},${lat},${lng});
+  nwr["shop"="bakery"](around:${radiusMeters},${lat},${lng});
   nwr["shop"="pastry"](around:${radiusMeters},${lat},${lng});
   nwr["shop"="tea"](around:${radiusMeters},${lat},${lng});
+  nwr["shop"="beverages"](around:${radiusMeters},${lat},${lng});
+  nwr["shop"="confectionery"](around:${radiusMeters},${lat},${lng});
+
+  // Name Regex matching for regional/local cafes
+  nwr["name"~"cafe|coffee|creme|chokolade|swad|bhuvan|chai|tea|bakery|bakers|lounge|espresso",i](around:${radiusMeters},${lat},${lng});
 );
 out center tags;
   `.trim();

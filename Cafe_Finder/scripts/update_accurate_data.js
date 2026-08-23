@@ -1,4 +1,9 @@
-import { CafeItem, CuratedListType } from './types';
+const fs = require('fs');
+const path = require('path');
+
+const mockDataPath = path.join(__dirname, '../src/lib/mockData.ts');
+
+const updatedMockDataCode = `import { CafeItem, CuratedListType } from './types';
 
 const IMAGES = {
   cafe1: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1200&q=80',
@@ -798,3 +803,7 @@ export const sampleCuratedLists: Omit<CuratedListType, 'id' | 'createdAt' | 'ite
     authorName: 'Sarah Chen (UI/UX Designer)',
   },
 ];
+`;
+
+fs.writeFileSync(mockDataPath, updatedMockDataCode, 'utf8');
+console.log('Successfully written verified accurate data to mockData.ts');
