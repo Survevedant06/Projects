@@ -17,7 +17,7 @@ from plyer import notification
 import pyautogui
 import wikipedia
 import pywhatkit as pwkx
-import google.generativeai as genai
+from google import genai
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -26,17 +26,20 @@ from PIL import Image
 import io
 import base64
 import textwrap
-import subprocess
-import requests
 import nltk
-nltk.download('wordnet')
+try:
+    nltk.data.find('corpora/wordnet')
+except LookupError:
+    nltk.download('wordnet', quiet=True)
 from nltk.corpus import wordnet
 from deep_translator import GoogleTranslator
 
 # Gemini AI Configuration
-genai.configure(api_key="AIzaSyCjGZozlCwigt4S4Zn7kvuGMXDLyyFEAxI")
-model = genai.GenerativeModel('gemini-1.5-flash')
-image_model = genai.GenerativeModel('gemini-pro')
+GEMINI_API_KEY = "AIzaSyCjGZozlCwigt4S4Zn7kvuGMXDLyyFEAxI"
+genai_client = genai.Client(api_key=GEMINI_API_KEY)
+GEMINI_MODEL = "gemini-2.0-flash"
+
+
 
 def generate_ppt():
     """Generate a PowerPoint presentation from voice input."""
@@ -52,7 +55,7 @@ def generate_ppt():
     try:
         # Generate content using Gemini AI
         prompt = f"Create an educational PowerPoint outline on {topic}. Include a title slide and 4-5 key slides with summarized points."
-        response = model.generate_content(prompt)
+        response = genai_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
         slides_content = response.text.split("\n\n")  # Split text into slides
 
         # Create PowerPoint
@@ -253,7 +256,7 @@ def gemini_response(query):
     try:
         past_conversation = load_history()
         prompt = f"Previous conversation:\n{past_conversation}\nUser: {query}\nResponse:\nKeep your response very brief and concise, no more than 2-3 sentences maximum."
-        response = model.generate_content(prompt)
+        response = genai_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
         return response.text
     except Exception as e:
         return "I am sorry, I could not process that."
@@ -925,33 +928,36 @@ if __name__ == "__main__":
         print("Running in GUI-only mode - bypassing authentication")
         launch_jarvis_standalone()
         sys.exit(0)
-        
+
+    # Create ONE QApplication for the entire lifetime of the process
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
+
     try:
         # Check if running in test mode (without camera)
         if len(sys.argv) > 1 and sys.argv[1] == "--no-camera":
             print("Running in test mode - bypassing face authentication")
-            # Launch Jarvis directly
-            launch_jarvis_standalone()
-            sys.exit(0)
-        
+            MainWindow = MovableMainWindow()
+            ui = Ui_MainWindow()
+            ui.setupUi(MainWindow)
+            MainWindow.show()
+            sys.exit(app.exec_())
+
         # Check if reference image exists, otherwise create one
         if not os.path.exists("face_reference.jpg"):
-            # If no reference image, capture one
-            app = QtWidgets.QApplication(sys.argv)
+            # If no reference image, show a setup dialog
             msgBox = QtWidgets.QMessageBox()
             msgBox.setWindowTitle("First Time Setup")
             msgBox.setText("No reference face image found. Would you like to capture one now? (Or run with --no-camera flag to bypass)")
             msgBox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             msgBox.setDefaultButton(QtWidgets.QMessageBox.Yes)
-            
+
             if msgBox.exec_() == QtWidgets.QMessageBox.Yes:
                 save_reference_image()
             else:
                 sys.exit()
-        
-        # Start the authentication app
+
+        # Start the authentication window
         try:
-            app = QtWidgets.QApplication(sys.argv)
             window = FaceAuthenticationWindow()
             window.show()
             sys.exit(app.exec_())
@@ -959,10 +965,9 @@ if __name__ == "__main__":
             print(f"Error in face authentication window: {auth_error}")
             with open("auth_error.log", "w") as f:
                 f.write(f"Authentication window error: {auth_error}")
-            
+
             # Fallback to direct launching if authentication window fails
             print("Falling back to direct launch")
-            app = QtWidgets.QApplication(sys.argv)
             MainWindow = MovableMainWindow()
             ui = Ui_MainWindow()
             ui.setupUi(MainWindow)
@@ -973,15 +978,14 @@ if __name__ == "__main__":
         print(f"Critical error in main: {main_error}")
         with open("critical_error.log", "w") as f:
             f.write(f"Critical error: {main_error}")
-            
+
         # Last resort - extremely simple window launch
         try:
             import traceback
             traceback.print_exc()
             with open("traceback.log", "w") as f:
                 traceback.print_exc(file=f)
-                
-            app = QtWidgets.QApplication(sys.argv)
+
             main_win = QtWidgets.QMainWindow()
             ui = Ui_MainWindow()
             ui.setupUi(main_win)

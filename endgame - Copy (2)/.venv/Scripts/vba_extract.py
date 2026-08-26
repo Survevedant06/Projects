@@ -1,4 +1,4 @@
-#!c:\Users\Comp\Desktop\endgame\.venv\Scripts\python.exe
+#!e:\VS_Code\Projects\endgame - Copy (2)\.venv\Scripts\python.exe
 
 ##############################################################################
 #

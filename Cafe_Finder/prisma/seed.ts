@@ -126,24 +126,32 @@ async function main() {
       }
     });
 
-    // Add items to list
-    const itemsToAdd = createdCafes.slice(0, 3);
-    for (let j = 0; j < itemsToAdd.length; j++) {
-      await prisma.curatedListItem.upsert({
-        where: {
-          listId_cafeId: {
-            listId: list.id,
-            cafeId: itemsToAdd[j].id
-          }
-        },
-        update: {},
-        create: {
-          listId: list.id,
-          cafeId: itemsToAdd[j].id,
-          curatorNote: `Must try the signature roast and sit by the sunlit window. Speed tested ${itemsToAdd[j].wifiSpeedMbps} Mbps!`,
-          order: j
+    // Add curated items to list
+    if (listData.items && listData.items.length > 0) {
+      for (let j = 0; j < listData.items.length; j++) {
+        const itemSpec = listData.items[j];
+        const matchingCafe = createdCafes.find((c) => c.slug === itemSpec.cafeSlug);
+        if (matchingCafe) {
+          await prisma.curatedListItem.upsert({
+            where: {
+              listId_cafeId: {
+                listId: list.id,
+                cafeId: matchingCafe.id,
+              },
+            },
+            update: {
+              curatorNote: itemSpec.curatorNote,
+              order: j,
+            },
+            create: {
+              listId: list.id,
+              cafeId: matchingCafe.id,
+              curatorNote: itemSpec.curatorNote,
+              order: j,
+            },
+          });
         }
-      });
+      }
     }
   }
 

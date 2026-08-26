@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -15,7 +17,11 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ success: true, bookmarks });
+    const cafes = bookmarks
+      .map((b) => b.cafe)
+      .filter((cafe): cafe is NonNullable<typeof cafe> => cafe !== null);
+
+    return NextResponse.json({ success: true, bookmarks: cafes });
   } catch (error: any) {
     console.error('Error fetching bookmarks:', error);
     return NextResponse.json(
