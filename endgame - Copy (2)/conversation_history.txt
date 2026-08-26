@@ -571,3 +571,21 @@ User:
 AI: Okay, I'm listening. What is your question or request?
 
 
+User: 
+AI: I am sorry, I could not process that.
+
+User: whats the time
+AI: I am sorry, I could not process that.
+
+User: 
+AI: I am sorry, I could not process that.
+
+User: 
+AI: I am sorry, I could not process that.
+
+User: what is my name
+AI: I am sorry, I could not process that.
+
+User: 
+AI: I am sorry, I could not process that.
+

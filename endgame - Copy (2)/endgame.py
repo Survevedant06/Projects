@@ -26,6 +26,7 @@ from PIL import Image
 import io
 import base64
 import textwrap
+import queue as _queue_mod
 import nltk
 try:
     nltk.data.find('corpora/wordnet')
@@ -34,12 +35,21 @@ except LookupError:
 from nltk.corpus import wordnet
 from deep_translator import GoogleTranslator
 
-# Gemini AI Configuration
-GEMINI_API_KEY = "AIzaSyCjGZozlCwigt4S4Zn7kvuGMXDLyyFEAxI"
+# Gemini AI Configuration — key is loaded from .env (never hardcoded)
+from dotenv import load_dotenv
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise EnvironmentError(
+        "GEMINI_API_KEY not found. "
+        "Create a .env file in the project folder with:\n"
+        "  GEMINI_API_KEY=your_key_here"
+    )
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-3.6-flash"
 
-
+# Thread-safe queue: GUI text input pushes here; command() drains it first.
+_text_queue: "_queue_mod.Queue[str]" = _queue_mod.Queue()
 
 def generate_ppt():
     """Generate a PowerPoint presentation from voice input."""
@@ -118,12 +128,21 @@ def clear_history():
     speak("Conversation history has been cleared.")
 
 def command():
+    # ── Text input takes priority ─────────────────────────────────────────
+    try:
+        typed = _text_queue.get_nowait()
+        print(f"[TEXT] You typed: {typed}")
+        return typed.lower()
+    except _queue_mod.Empty:
+        pass
+
+    # ── Fall through to voice recognition ─────────────────────────────────
     r = sr.Recognizer()
     with sr.Microphone() as source:
         print("Listening...")
-        r.pause_threshold = 1  # Increased pause threshold for better sentence completion
-        r.energy_threshold = 300  # Lower energy threshold to detect softer speech
-        r.adjust_for_ambient_noise(source, duration=0.5)  # Adjust for ambient noise
+        r.pause_threshold = 1       # better sentence completion
+        r.energy_threshold = 300    # detect softer speech
+        r.adjust_for_ambient_noise(source, duration=0.5)
         audio = r.listen(source)
     try:
         content = r.recognize_google(audio, language='en-in')
@@ -255,29 +274,54 @@ def get_bitcoin_price():
 def gemini_response(query):
     try:
         past_conversation = load_history()
-        prompt = f"Previous conversation:\n{past_conversation}\nUser: {query}\nResponse:\nKeep your response very brief and concise, no more than 2-3 sentences maximum."
+        prompt = (
+            f"Previous conversation:\n{past_conversation}\n"
+            f"User: {query}\nResponse:\n"
+            "Keep your response very brief and concise, no more than 2-3 sentences maximum."
+        )
         response = genai_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
         return response.text
     except Exception as e:
-        return "I am sorry, I could not process that."
+        print(f"[gemini_response ERROR] {type(e).__name__}: {e}")
+        return f"[API error] {type(e).__name__}: {e}"
 
-def matches_command(request, keywords):
-    """Check if the request contains any of the keywords."""
-    return any(keyword in request for keyword in keywords)
+def _normalise(text: str) -> str:
+    """Lower-case, expand common contractions, strip punctuation."""
+    import re
+    text = text.lower()
+    # expand common contractions so voice/text both hit the same keyword
+    text = text.replace("what's", "what is").replace("what's", "what is")
+    text = text.replace("whats",  "what is")
+    text = text.replace("it's",   "it is")
+    text = text.replace("i'm",    "i am")
+    text = text.replace("don't",  "do not")
+    text = text.replace("can't",  "cannot")
+    text = text.replace("won't",  "will not")
+    text = text.replace("'",      "")   # strip remaining apostrophes
+    # strip all punctuation except spaces
+    text = re.sub(r"[^\w\s]", "", text)
+    return text
+
+def matches_command(request: str, keywords: list) -> bool:
+    """Return True if the normalised request contains any normalised keyword."""
+    norm_req = _normalise(request)
+    return any(_normalise(kw) in norm_req for kw in keywords)
 
 class JarvisThread(QThread):
     update_signal = QtCore.pyqtSignal(str)
-    
+    status_signal = QtCore.pyqtSignal(str)   # "IDLE" | "LISTENING" | "PROCESSING"
+
     def __init__(self):
         super().__init__()
         self.paused = False
         self.skip_current = False
-    
+
     def run(self):
         speak("Hello, I am Jarvis. How can I help you?")
         while True:
             if self.paused:
                 # While paused, only listen for "resume" command
+                self.status_signal.emit("LISTENING")
                 request = command()
                 if matches_command(request, ["resume", "continue", "unpause", "start again"]):
                     speak("Resuming operation")
@@ -285,27 +329,37 @@ class JarvisThread(QThread):
                     self.update_signal.emit("Jarvis resumed.")
                 time.sleep(0.5)
                 continue
-                
+
+            self.status_signal.emit("LISTENING")
             request = command()
+            self.status_signal.emit("PROCESSING")
+
+            # ── Skip empty / noise grabs ───────────────────────────────────
+            if not request or not request.strip():
+                self.status_signal.emit("LISTENING")
+                continue
+
             now = datetime.now()
             send_time_hour = now.hour
             send_time_minute = now.minute + 1
-            
+
             # Check for pause command
             if matches_command(request, ["pause", "wait", "hold on", "stop listening"]):
                 speak("Pausing operation. Say 'resume' to continue.")
                 self.paused = True
                 self.update_signal.emit("Jarvis paused.")
+                self.status_signal.emit("IDLE")
                 continue
-                
+
             # Check for next/skip command
             if matches_command(request, ["next", "skip", "skip this", "next command"]):
                 speak("Skipping current command. What would you like me to do instead?")
                 self.update_signal.emit("Command skipped.")
                 continue
-                
+
             if matches_command(request, ["stop", "exit", "quit", "bye", "goodbye"]):
                 self.update_signal.emit("Jarvis stopped.")
+                self.status_signal.emit("IDLE")
                 break
            
             elif matches_command(request, ["create powerpoint", "make presentation", "create presentation", "create a powerpoint", "make a powerpoint"]):
@@ -513,94 +567,365 @@ class JarvisThread(QThread):
                 speak(response)
                 save_history(request, response)
 
+# ─── Shared stylesheet constants ────────────────────────────────────────────
+_HUD_FONT       = "Consolas, 'Courier New', monospace"
+_CYAN           = "#00E5FF"
+_STATUS_COLORS  = {"IDLE": "#607D8B", "LISTENING": "#00E5FF", "PROCESSING": "#FF9100"}
+
+_BTN_RUN = """
+    QPushButton {
+        background-color: rgba(0,20,30,0.85);
+        color: #00E5FF;
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 15px;
+        font-weight: bold;
+        letter-spacing: 3px;
+        border-radius: 6px;
+        border: 2px solid #00E5FF;
+        padding: 4px 16px;
+    }
+    QPushButton:hover {
+        background-color: rgba(0,229,255,0.18);
+        border: 2px solid #80FFFF;
+        color: #FFFFFF;
+    }
+    QPushButton:pressed {
+        background-color: rgba(0,229,255,0.35);
+        border: 2px solid #00E5FF;
+    }
+"""
+
+_BTN_STOP = """
+    QPushButton {
+        background-color: rgba(30,0,0,0.85);
+        color: #FF4D6A;
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 15px;
+        font-weight: bold;
+        letter-spacing: 3px;
+        border-radius: 6px;
+        border: 2px solid #FF4D6A;
+        padding: 4px 16px;
+    }
+    QPushButton:hover {
+        background-color: rgba(255,77,106,0.18);
+        border: 2px solid #FF8099;
+        color: #FFFFFF;
+    }
+    QPushButton:pressed {
+        background-color: rgba(255,77,106,0.35);
+        border: 2px solid #FF4D6A;
+    }
+"""
+
+_TEXT_BROWSER = """
+    QTextBrowser {
+        background-color: rgba(0, 8, 18, 0.72);
+        color: #00FF88;
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 13px;
+        border: 1px solid rgba(0,229,255,0.45);
+        border-left: 3px solid #00E5FF;
+        border-radius: 4px;
+        padding: 6px 10px;
+        selection-background-color: #00E5FF;
+        selection-color: #000000;
+    }
+    QScrollBar:vertical {
+        background: rgba(0,0,0,0);
+        width: 6px;
+        margin: 0px;
+    }
+    QScrollBar::handle:vertical {
+        background: #00E5FF;
+        border-radius: 3px;
+        min-height: 20px;
+    }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }
+"""
+
+_CLOCK_STYLE = """
+    QLabel {
+        background: transparent;
+        color: #00E5FF;
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 15px;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
+"""
+
+_STATUS_BASE = """
+    QLabel {{
+        background: rgba(0,8,18,0.7);
+        color: {color};
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        border: 1px solid {color};
+        border-radius: 3px;
+        padding: 1px 8px;
+    }}
+"""
+
+# ─── Custom title bar widget ─────────────────────────────────────────────────
+class _TitleBar(QtWidgets.QWidget):
+    """Thin frameless title bar with drag support and min/close buttons."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent_win = parent
+        self._drag_pos = None
+        self.setFixedHeight(32)
+        self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
+        self.setStyleSheet(
+            "background: rgba(0,8,22,0.90);"
+            "border-bottom: 1px solid rgba(0,229,255,0.30);"
+        )
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(10, 0, 6, 0)
+        layout.setSpacing(0)
+
+        title = QtWidgets.QLabel("J.A.R.V.I.S.  //  ENDGAME INTERFACE")
+        title.setStyleSheet(
+            "color: #00E5FF; font-family: Consolas,'Courier New',monospace;"
+            "font-size: 12px; font-weight: bold; letter-spacing: 3px;"
+            "background: transparent; border: none;"
+        )
+        layout.addWidget(title)
+        layout.addStretch()
+
+        btn_min_style = (
+            "QPushButton{background:transparent;color:#888;font-size:14px;"
+            "border:none;min-width:28px;min-height:28px;}"
+            "QPushButton:hover{color:#fff;background:rgba(255,255,255,0.08);}"
+        )
+        btn_close_style = (
+            "QPushButton{background:transparent;color:#FF4D6A;font-size:14px;"
+            "border:none;min-width:28px;min-height:28px;}"
+            "QPushButton:hover{background:#FF4D6A;color:#fff;}"
+        )
+
+        self.btn_min = QtWidgets.QPushButton("—")
+        self.btn_min.setStyleSheet(btn_min_style)
+        self.btn_min.clicked.connect(lambda: parent.showMinimized())
+
+        self.btn_close = QtWidgets.QPushButton("✕")
+        self.btn_close.setStyleSheet(btn_close_style)
+        self.btn_close.clicked.connect(lambda: parent.close())
+
+        layout.addWidget(self.btn_min)
+        layout.addWidget(self.btn_close)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._drag_pos = event.globalPos() - self.parent_win.frameGeometry().topLeft()
+
+    def mouseMoveEvent(self, event):
+        if self._drag_pos and event.buttons() == QtCore.Qt.LeftButton:
+            self.parent_win.move(event.globalPos() - self._drag_pos)
+
+    def mouseReleaseEvent(self, event):
+        self._drag_pos = None
+
+    def mouseDoubleClickEvent(self, event):
+        if self.parent_win.isMaximized():
+            self.parent_win.showNormal()
+        else:
+            self.parent_win.showMaximized()
+
+
+# ─── Main UI class ───────────────────────────────────────────────────────────
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
+        # ── Window chrome ──────────────────────────────────────────────────
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1317, 806)
+        MainWindow.setWindowTitle("J.A.R.V.I.S.")
+        MainWindow.setWindowFlags(
+            QtCore.Qt.FramelessWindowHint | QtCore.Qt.Window
+        )
+
+        # ── Central widget ─────────────────────────────────────────────────
         self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setStyleSheet("background: black;")
+
+        # ── GIF background (shifted 32 px down to leave room for title bar) ─
         self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(0, -60, 1341, 851))
-        
-        # Use QMovie to display animated GIF
+        self.label.setGeometry(QtCore.QRect(0, 32, 1317, 774))
         self.movie = QtGui.QMovie("gui.gif")
         self.label.setMovie(self.movie)
         self.movie.start()
-        
         self.label.setScaledContents(True)
+
+        # ── Custom title bar ───────────────────────────────────────────────
+        self.title_bar = _TitleBar(self.centralwidget)
+        self.title_bar.setGeometry(0, 0, 1317, 32)
+
+        # ── Conversation log ───────────────────────────────────────────────
         self.textBrowser_2 = QtWidgets.QTextBrowser(self.centralwidget)
-        self.textBrowser_2.setGeometry(QtCore.QRect(530, 251, 471, 361))
-        self.pushButton_2 = QtWidgets.QPushButton("RUN", self.centralwidget)
-        self.textBrowser_2.setStyleSheet("background: transparent; color: #00FF00; font-size: 16px; border: none;")
-        self.pushButton_2.setGeometry(QtCore.QRect(530, 640, 101, 31))
-        self.pushButton_2.setStyleSheet("""
-            QPushButton {
-                background-color: #28a745;
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-                border-radius: 10px;
-                border: 2px solid #218838;
+        self.textBrowser_2.setGeometry(QtCore.QRect(530, 283, 471, 325))
+        self.textBrowser_2.setStyleSheet(_TEXT_BROWSER)
+
+        # ── Status indicator ───────────────────────────────────────────────
+        self.lbl_status = QtWidgets.QLabel("●  IDLE", self.centralwidget)
+        self.lbl_status.setGeometry(QtCore.QRect(700, 253, 130, 22))
+        self.lbl_status.setAlignment(QtCore.Qt.AlignCenter)
+        self.lbl_status.setStyleSheet(_STATUS_BASE.format(color=_STATUS_COLORS["IDLE"]))
+
+        # ── RUN button ─────────────────────────────────────────────────────
+        self.pushButton_2 = QtWidgets.QPushButton("▶  RUN", self.centralwidget)
+        self.pushButton_2.setGeometry(QtCore.QRect(558, 636, 150, 44))
+        self.pushButton_2.setStyleSheet(_BTN_RUN)
+        self.pushButton_2.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+
+        # ── STOP button ────────────────────────────────────────────────────
+        self.pushButton_3 = QtWidgets.QPushButton("■  STOP", self.centralwidget)
+        self.pushButton_3.setGeometry(QtCore.QRect(814, 636, 150, 44))
+        self.pushButton_3.setStyleSheet(_BTN_STOP)
+        self.pushButton_3.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+
+        # ── Clock label (top-left) ─────────────────────────────────────────
+        self.lbl_clock = QtWidgets.QLabel("", self.centralwidget)
+        self.lbl_clock.setGeometry(QtCore.QRect(80, 38, 200, 24))
+        self.lbl_clock.setStyleSheet(_CLOCK_STYLE)
+
+        # ── Date label (top-right) ─────────────────────────────────────────
+        self.lbl_date = QtWidgets.QLabel("", self.centralwidget)
+        self.lbl_date.setGeometry(QtCore.QRect(1040, 38, 200, 24))
+        self.lbl_date.setStyleSheet(_CLOCK_STYLE)
+        self.lbl_date.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        # ── Text input field ───────────────────────────────────────────────
+        self.txt_input = QtWidgets.QLineEdit(self.centralwidget)
+        self.txt_input.setGeometry(QtCore.QRect(530, 690, 360, 38))
+        self.txt_input.setPlaceholderText("Type a command and press Enter or Send…")
+        self.txt_input.setStyleSheet("""
+            QLineEdit {
+                background-color: rgba(0, 8, 18, 0.80);
+                color: #00FF88;
+                font-family: Consolas, 'Courier New', monospace;
+                font-size: 13px;
+                border: 1px solid rgba(0,229,255,0.45);
+                border-left: 3px solid #00E5FF;
+                border-radius: 4px;
+                padding: 4px 10px;
+                selection-background-color: #00E5FF;
+                selection-color: #000000;
             }
-            QPushButton:hover {
-                background-color: #218838;
-            }
-            QPushButton:pressed {
-                background-color: #1e7e34;
+            QLineEdit:focus {
+                border: 1px solid #00E5FF;
+                border-left: 3px solid #00E5FF;
             }
         """)
-        self.pushButton_3 = QtWidgets.QPushButton("STOP", self.centralwidget)
-        self.pushButton_3.setGeometry(QtCore.QRect(900, 640, 101, 31))
-        self.pushButton_3.setStyleSheet("""
+
+        # ── Send button ────────────────────────────────────────────────────
+        self.btn_send = QtWidgets.QPushButton("SEND", self.centralwidget)
+        self.btn_send.setGeometry(QtCore.QRect(898, 690, 103, 38))
+        self.btn_send.setStyleSheet("""
             QPushButton {
-                background-color: #dc3545;
-                color: white;
-                font-size: 16px;
+                background-color: rgba(0,20,30,0.85);
+                color: #00E5FF;
+                font-family: Consolas, 'Courier New', monospace;
+                font-size: 13px;
                 font-weight: bold;
-                border-radius: 10px;
-                border: 2px solid #c82333;
+                letter-spacing: 2px;
+                border-radius: 4px;
+                border: 1px solid #00E5FF;
+                padding: 4px 10px;
             }
             QPushButton:hover {
-                background-color: #c82333;
+                background-color: rgba(0,229,255,0.18);
+                border: 1px solid #80FFFF;
+                color: #FFFFFF;
             }
             QPushButton:pressed {
-                background-color: #a71d2a;
+                background-color: rgba(0,229,255,0.35);
             }
         """)
-        self.textBrowser_3 = QtWidgets.QTextBrowser(self.centralwidget)
-        self.textBrowser_3.setGeometry(QtCore.QRect(140, 10, 191, 31))
-        self.textBrowser_3.setStyleSheet("background:transparent; border: none; color: white; font-size: 14px;")
-        self.textBrowser_4 = QtWidgets.QTextBrowser(self.centralwidget)
-        self.textBrowser_4.setGeometry(QtCore.QRect(1070, 10, 191, 31))
-        self.textBrowser_4.setStyleSheet("background:transparent; border: none; color: white; font-size: 14px;")
+        self.btn_send.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+
+        # ── Raise all overlays above GIF ───────────────────────────────────
+        for w in (self.title_bar, self.lbl_clock, self.lbl_date,
+                  self.textBrowser_2, self.lbl_status,
+                  self.pushButton_2, self.pushButton_3,
+                  self.txt_input, self.btn_send):
+            w.raise_()
+
+        # ── Wire up ────────────────────────────────────────────────────────
         MainWindow.setCentralWidget(self.centralwidget)
         self.pushButton_2.clicked.connect(self.start_jarvis)
         self.pushButton_3.clicked.connect(self.stop_jarvis)
+        self.btn_send.clicked.connect(self.send_text)
+        self.txt_input.returnPressed.connect(self.send_text)
+
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_time)
         self.timer.start(1000)
+        self.update_time()   # populate immediately on startup
+
         self.jarvis_thread = None
-    
+
+
+    # ── Clock update ───────────────────────────────────────────────────────
     def update_time(self):
-        self.textBrowser_3.setText(datetime.now().strftime("%H:%M:%S"))
-        self.textBrowser_4.setText(datetime.now().strftime("%d-%m-%Y"))
-    
+        now = datetime.now()
+        self.lbl_clock.setText(now.strftime("⏱  %H:%M:%S"))
+        self.lbl_date.setText(now.strftime("%d-%m-%Y"))
+
+    # ── Status dot ─────────────────────────────────────────────────────────
+    def update_status(self, state: str):
+        color = _STATUS_COLORS.get(state, "#607D8B")
+        self.lbl_status.setText(f"●  {state}")
+        self.lbl_status.setStyleSheet(_STATUS_BASE.format(color=color))
+
+    # ── Text command send ───────────────────────────────────────────────────
+    def send_text(self):
+        text = self.txt_input.text().strip()
+        if not text:
+            return
+        self.txt_input.clear()
+
+        if not self.jarvis_thread or not self.jarvis_thread.isRunning():
+            self.textBrowser_2.append(
+                '<span style="color:#FF9100;">⚠ Start JARVIS first (▶ RUN)</span>'
+            )
+            return
+
+        # Echo immediately in the log
+        self.textBrowser_2.append(f'<span style="color:#00E5FF;">You: {text}</span>')
+        # Push into queue — command() will pick it up on the next loop tick
+        _text_queue.put(text)
+
+    # ── Jarvis controls ────────────────────────────────────────────────────
     def start_jarvis(self):
-        self.textBrowser_2.append("Jarvis started...")
+        if self.jarvis_thread and self.jarvis_thread.isRunning():
+            return
+        self.textBrowser_2.clear()
+        self.textBrowser_2.append("[ JARVIS ONLINE ]")
         self.jarvis_thread = JarvisThread()
         self.jarvis_thread.update_signal.connect(self.textBrowser_2.append)
+        self.jarvis_thread.status_signal.connect(self.update_status)
+        self.update_status("LISTENING")
         self.jarvis_thread.start()
-    
+
     def stop_jarvis(self):
+        self.update_status("IDLE")
         if self.jarvis_thread:
             self.jarvis_thread.terminate()
         speak("Shutting down")
         QtWidgets.qApp.quit()
 
+
+# ─── Draggable main window ───────────────────────────────────────────────────
 class MovableMainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MovableMainWindow, self).__init__()
         self.oldPos = None
-    
+
     def mousePressEvent(self, event):
         self.oldPos = event.globalPos()
 

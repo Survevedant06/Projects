@@ -1,0 +1,23 @@
+﻿# ── Secrets ───────────────────────────────
+.env
+*.env
+
+# ── Python ────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ── Virtual environment ───────────────────
+.venv/
+venv/
+env/
+
+# ── Logs & temp ───────────────────────────
+*.log
+*.tmp
+auth_error.log
+critical_error.log
+traceback.log
+jarvis_error.log
+standalone_error.log
